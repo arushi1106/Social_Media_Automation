@@ -6,14 +6,14 @@
   <div class="container my-3">
       <h2>UPDATE DEMO</h2>
 
-    <form action="/update/{{to_do.serial}}" method="POST">
+    <form action="/update/{{todo.serial}}" method="POST">
     <div class="mb-3">
       <label for="title"  class="form-label">Demo Title</label>
-      <input type="text" name="title" class="form-control" id="title" aria-describedby="emailHelp" value="{{to_do.title}}">
+      <input type="text" name="title" class="form-control" id="title" aria-describedby="emailHelp" value="{{todo.title}}">
     </div>
     <div class="mb-3">
       <label for="desc" class="form-label">Description</label>
-      <input type="text" name = "desc" class="form-control" id="desc" value="{{to_do.desc}}">
+      <input type="text" name = "desc" class="form-control" id="desc" value="{{todo.desc}}">
     </div>
     <button type="submit" class="btn btn-dark">Update</button>
   </form>

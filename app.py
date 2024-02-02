@@ -63,7 +63,7 @@ def update(serial):
         return redirect('/')
 
     todo = Demo.query.filter_by(serial=serial).first()
-    return render_template('update.html', all_demo=all_demo)
+    return render_template('update.html', todo=todo)
 
 
 if __name__ == '__main__':
