@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Headings</title>
+</head>
+<body>
+    <h2>News Headings</h2>
+    <ul>
+        {% for heading in headings %}
+            <li>{{ heading }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+
+
+
+
+ # events_data = er.execQuery(q)['events']['results']
+
+    # Extract headings from events_data
+    # headings = [event['title'] for event in events_data]
+
+    # return render_template('headings_list.html', headings=headings)
+
+
+
+
+
+
+
+
+
+
+@app.route('/newsfetch')
+def news():
+    er = EventRegistry(apiKey='83d4f228-220b-4e83-b65e-20b68fd205a0')
+
+    # us_uri = er.getLocationUri("USA")
+
+    q = QueryArticles(
+        keywords=QueryItems.OR(['GenAI', 'Generative AI', 'Generative Arificial Intelligence']),
+        sourceLocationUri=er.getLocationUri("USA"))
+
+    q.setRequestedResult(RequestArticlesInfo(count=1))
+    events = q.execQuery(er, sortBy="date")
+    #for information in info:
+    print("inside")
+        #print(information)
+    return jsonify(events)
