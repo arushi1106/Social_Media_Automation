@@ -1,80 +1,213 @@
 url,title,text
-https://www.digit.fyi/half-of-uk-tech-leaders-consider-genai-to-solve-skills-shortage/,Half of UK tech leaders consider genAI to solve skills shortage,"Home > Business > Skills 
-Half of UK Tech Leaders Consider GenAI to Solve Skills Shortage
-
-
-                                                                                Elizabeth Greenberg                                                                                
-
-07 February 2024,
-                                                09.42am
-
-
-
-
-
-
-
-
-“In the face of the growing tech skills shortage, businesses not only need, they are already planning innovative strategies to tackle the industry-wide challenge,” Gigged.AI CEO and Co-founder Rich Wilson said. 
-
+https://www.networkworld.com/article/1306378/cisco-launches-motific-hub-to-streamline-generative-ai-deployment.html,Cisco launches Motific hub to streamline generative AI deployment | Network World,"
+				Cloud-based Motific hub is aimed at helping enterprises more quickly and securely create generative AI applications.			  Cisco is delivering a cloud-based service that gives enterprise customers a centralized hub for managing generative AI elements such as large language models (LLM), security controls, APIs and more. Called Motific, the service promises to help streamline and accelerate the creation, deployment and management of generative AI-based applications for the enterprise. “Think of Motific as a one-stop shop where a ton of personas – large language models, ChatGPT etc. – come together with enterprise organization-specific policies and data sources to make it easier to create and deploy generative AI applications in a safe, secure manner,” said Vijoy Pandey, senior vice president of Cisco’s advanced research outfit Outshift.  Organizations want to standardize and templatize the commonly used building blocks of genAI applications, such as assistants, APIs, foundation models, knowledge bases for retrieval-augmented generation (RAG), and policy controls, and Motific addresses those interests, Pandey said. RAG is an AI framework that typically increases the quality of LLM responses by including resources from a variety of locations in order to reinforce the accuracy, credibility, and contextual relevance of those responses. Once in place, Motific discovers any generative AI resources in the enterprise and lets customers set up patterns and policies for specific applications. “For example, if a customer wanted to create a financial assistant for the CFO, they create the motif that would define the policies, identity and access controls they would need, as well as the LLMs available to them to develop that assistant, and Motific would control and monitor that development, Pandey said. The idea is to reduce genAI application development time from months to days, Pandey said. Motific offers compliance controls for over-usage, overrun spending, and integration of organization-specific data sources, he said. It also tracks business processes and prompts usage intelligence with ROI and cost analysis, including consolidated monitoring audit trails and key metrics tracking of all user requests. “Motific is using a ton of generative AI technology under the hood itself. For example, it uses a ‘prompt processing unit’ to provide insights that keep AI hallucinations and toxicity in the development process to a minimum,” Pandey said. Enterprises can use Motific’s built-in policy controls – for handling compliance, sensitive data, security and access, for example – or customize them based on their own internal policies. On the security side, the first release of Motific implements the Open Worldwide Application Security Project (OWASP) tools and technologies for securing applications. “Motific will let security teams know if there is a security problem and will point out where this is happening, then let them quarantine the impacted attack path,” Pandey said. “The system can also generate remediation code to help fix the issue.” Motific will be generally available by June. Michael Cooney is a Senior Editor with Network World who has written about the IT world for more than 25 years. He can be reached at michael_cooney@foundryco.com. Sponsored Links"
+https://www.brecorder.com/news/40287815,PwC survey: CEOs see increased role of GenAI in next 3 years - Markets - Business Recorder,"
+        Subscribing is the best way to get our best stories immediately.
+       Workers must improve their skills to remain relevant as generative Artificial Intelligence (GenAI) is set to play a bigger role in the corporate world in the next three years, revealed the recently-published 27th Annual Global CEO Survey – Pakistan titled At the Crossroads – Opportunities and challenges in the age of disruption. PwC, one of the Big Four accounting firms, received 4,702 completed surveys from CEOs globally, representing responses from 105 countries and territories, further emphasising the global reach and impact of the survey. In Pakistan, the survey saw the participation of 62 CEOs across 16 industries. A total of 47 publicly-listed entities were a part of it, while over 50% companies had an annual revenue of $100 million-plus. PwC survey: 42% of Pakistani CEOs see business model unviable in less than a decade Of these responding Pakistani CEOs, 3% were female and 97% male. Their responses were recorded by 10 November 2023. A clear majority – 69% of CEOs – agreed that generative AI will necessitate the development of new skills across their workforce looking at the next three years. However, 61% of them feel that generative AI has not been adopted in their companies in the last twelve months. Most of them – 68% of CEOs – believe generative AI will profoundly transform the way their companies create, deliver and capture value in the next three years. With respect to potential risks, more than half (63%) of CEOs believed that generative AI could escalate cybersecurity threats such as phishing attacks and data breaches within the forthcoming year. Majority of the CEOs (58%) expect efficiencies to increase in their own time due to generative AI in the upcoming year. Almost the same number of CEOs (57%) GenAI also think the same for their employees’ time. Most of these respondents expect a slight increase (i.e., 5% to 15%) in overall efficiency due to GenAI in the forthcoming year. Majority CEOs somewhat optimistic over Pakistan’s economic growth in coming 12 months CEOs also believe that generative AI will result in little to no change in their company’s headcount (58%) and revenue (55%). When it comes to the effect of GenAI on profitability, 52% of the responding CEOs expect a slight variation (little to no change, within the range of 5% decrease to a 5% increase). Semih Kumluk, who is a Digital Training Senior Manager at PwC’s Academy, in an interview to Business Recorder last year said Pakistan must come out of its hangover of availability of cheap labour in the country and start leveraging technology. Kumluk, who designs, develops and delivers custom-designed upskilling programmes in all digital topics, also mentioned a PwC report, which stated that AI could contribute $15.7 trillion by 2030 to the world economy – more than the current output of India and China combined. “AI will increase productivity and definitely some people will lose jobs if they resist change. However, there will be more jobs created and those will remain employed who upskill their professional abilities,” said Kumluk then. “The youth need to be directed towards technology. If they pick AI as their career, it may also increase their income, and they can contribute more to the economy in their entire lifetime” he added. He said that embracing technology, including AI was the way forward for everyone including Pakistan. Kumluk, who is Turkish by origin, said one of the reasons for the downfall of the Ottoman Empire was that it did not embrace new technologies."
+https://venturebeat.com/games/atlas-raises-4-5m-research-grant-for-3d-genai-and-3d-asset-creation/,Atlas raises $4.5M research grant for 3D GenAI and 3D asset creation | VentureBeat,"Are you looking to showcase your brand in front of the gaming industry’s top leaders? Learn more about GamesBeat Summit sponsorship opportunities here.   Atlas has raised $4.5 million from the Austrian Research Promotion Agency (FFG) to build 3D generative AI and 3D asset creation tools.  Vienna-based Atlas said the grant will amplify Atlas’s research and development initiatives, solidifying its position as a leader in changing the way developers create virtual worlds and gaming experiences. The endorsement from the agency underscores Atlas’s pioneering work in the realm of 3D generative AI. Atlas said previously it raised $6 million from investors and it also strategically partnered with luminaries in triple-A studios, next-gen gaming, and immersive design, including Consortium9, Shrapnel and Square Enix. Ben James, CEO of Atlas, said in a statement, “Receiving this grant signifies trust and belief in Atlas’s 3D generative AI innovation, not just as a participant in the space, but as the leader. As we chart an exciting path forward, we remain relentless in our dedication to push the boundaries of what’s possible when technology and creativity converge. Our global ambitions are made possible by our Austrian roots, and this funding is a high honor.” GamesBeat Summit Call for Speakers We’re thrilled to open our call for speakers to our flagship event, GamesBeat Summit 2024 hosted in Los Angeles, where we will explore the theme of “Resilience and Adaption”.Â  Atlas has been selected as an accelerator by FFG, indicating that the company is at the forefront of high-impact innovations capable of creating new markets or disrupting existing ones. The grant will be disbursed over three years, starting with $608,000 in 2024, followed by up to $2.3 million in 2025 and $1.6 million in 2026, contingent upon the achievement of milestones. The infusion of funds will empower Atlas to undertake extensive research, development, and the introduction of new technologies and projects in 2024 and beyond. As the gaming landscape evolves rapidly, Atlas wants to provide partners with the capability to craft highly tailored virtual experiences that adapt in real time. Atlas said it remains committed to ethical AI practices, ensuring partner data integrity while unlocking efficiencies and expanding the horizons of 3D generative AI. This grant announcement follows Atlas’s emergence from stealth in November 2023, marked by a $6 million fundraising round from industry giants, including 6th Man Ventures (6MV), Collab+Currency, A16z Scouting Fund via Shrapnel, and others. Atlas had previously received funding from grants dedicated to building AI technology, aligning with the European Union’s High-Level Expert Group on Trustworthy AI in 2020. With the EU’s recent rollout of regulations through the AI Act, the additional $4.5 million over the next three years reinforces the commitment to building trustworthy AI, prioritizing transparency, accountability, and inclusivity. VentureBeat's mission is to be a digital town square for technical decision-makers to gain knowledge about transformative enterprise technology and transact. Discover our Briefings. 
+					Enjoy access to special events, private newsletters and more.				 © 2024 VentureBeat. All rights reserved."
+https://www.telecompaper.com/news/global-ai-pc-generative-ai-smartphone-shipments-to-reach-295-million-gartner--1490551,Telecompaper,Telecompaper This Site Contact Information Legal Information
+https://www.telecomtv.com/content/digital-platforms-services/gartner-predicts-global-shipments-of-ai-pcs-and-genai-smartphones-will-total-295-million-units-in-2024-49590/,"Gartner predicts global shipments of AI PCs and GenAI smartphones will total 295 million units in 2024, Digital Platforms and Services | TelecomTV","Feb 7, 2024   Worldwide shipments of AI PCs and generative AI (GenAI) smartphones are projected to total 295 million units by the end of 2024, up from 29 million units in 2023, according to a new forecast from Gartner, Inc. Gartner defines AI PCs as PCs that are equipped with dedicated AI accelerators or cores, neural processing units (NPUs), accelerated processing units (APUs) or tensor processing units (TPUs), designed to optimize and accelerate AI tasks on the device. This provides improved performance and efficiency in handling AI and GenAI workloads without relying on external servers or cloud services.   GenAI smartphones are designed smartphones equipped with hardware and software capabilities that enable seamless integration and efficient execution of GenAI-driven features and applications on the smartphone. These smartphones are capable of locally running a base or fine-tuned AI model that generates new derived versions of content, strategies, designs and methods. Examples of this include Gemini Nano from Google, ERNIE from Baidu and OpenAI’s GPT-4. “The rapid adoption of on-device GenAI capabilities and AI processors will eventually become a standard requirement for technology vendors,” said Ranjit Atwal, Senior Director Analyst at Gartner. “This ubiquity will pose challenges for vendors in differentiating themselves from competitors, making it harder to create unique selling points and drive increased revenues.” Gartner estimates 240 million GenAI smartphones and 54.5 million AI PCs will be shipped by the end of 2024 (see Figure 1). This will represent 22% of basic and premium smartphones and 22% of all PCs in 2024.  Source: Gartner (February 2024) The integration of AI into PCs is not expected to drive end-user spending beyond anticipated price increases. Business device buyers will demand compelling reasons to invest. However, it will take time for software providers to harness the power of on-device AI and clearly demonstrate its enhanced benefits. The PC market returned to growth in the fourth quarter of 2023 after eight consecutive quarters of decline. Gartner estimates overall PC shipments will total 250.4 million units in 2024, a 3.5% increase from 2023. On-device AI should rejuvenate the marketing of PCs through 2024 and help sustain existing anticipated replacement cycles, negating some of the negative effects of a disruptive socioeconomic environment. Smartphone Market to Return to Growth in 2024 Like AI PCs, GenAI smartphones will not bolster smartphone demand until 2027. “The enhancements to smartphones evolve the current experiences with cameras and voice integration, but these capabilities are expected by users rather than demonstrating a new groundbreaking functionality. Users have the same expectation for the functionality of GenAI on their smartphone,” said Atwal. “They are unlikely to pay a premium for GenAI smartphones without the availability of any groundbreaking applications.” The catalyst for transformative shifts in user experience lies in the advancement of smaller versions of large language models (LLMs) specifically tailored for smartphones. This evolution will transform smartphones into even more intuitive companions capable of comprehending and responding to human language and visual cues, which will elevate the overall user experience to new heights. The smartphone market recorded its first quarter of growth in 4Q23 after nine consecutive quarters of decline. In 2024, worldwide smartphone shipments are expected to grow 4.2%, totalling 1.2 billion units year over year. “We should not interpret the growth in smartphone shipments as a full-fledged recovery,” said Atwal. “It is more accurate to view it as a stabilization of lower level of units, which are nearly 60 million lower than in 2022.” Gartner clients can read more in “Forecast Analysis: AI PCs and GenAI Smartphones, Worldwide.” Feb 7, 2024 Feb 7, 2024 Feb 7, 2024 Feb 7, 2024 Feb 7, 2024 Sign up to receive TelecomTV's top news and videos, plus exclusive subscriber-only content direct to your inbox. TelecomTV is produced by the team at Decisive Media. © Decisive Media Limited 2024. All rights reserved. All brands and products are the trademarks of their respective holder(s)."
+https://risnews.com/avocados-mexico-taps-genai-powered-image-recognition-super-bowl,Avocados From Mexico Taps GenAI-Powered Image Recognition for Super Bowl | RIS News,"Avocados From Mexico — a wholly-owned subsidiary of the Mexican Hass Avocado Importers Association (MHAIA) — is once again leveraging technology in its Super Bowl promotions, this time launching a generative AI platform that taps image recognition and content generation to create personalized recipes.  Avocados From Mexico is the promotional arm for both MHAIA and the Association of Growers and Packers of Avocados From Mexico, and created GuacAImole in collaboration with digital experience agency 270B. The platform asks users to upload just one photo of ingredients or a finished dish to betterbowl.ai and uses multi-modal AI to generate a guacamole recipe using the items pictured.  The platform leverages GPT-4 for text, GPT-4 Vision for image recognition, and DALL-E for image generation in order to deliver a personalized recipe with an ingredient list and step-by-step directions for recreating the recipe. The company is looking to add voice and video capabilities in the near future as well. The company is also providing additional information like flavor combinations, food pairings, and an AI-generated image that shows what the guacamole should look like. If someone uploads a photo of feta cheese and cucumbers, the generator might create a ""Big Game Greek-Inspired Guacamole Fiesta."" For photos of completed dishes, the AI breaks it down into its individual components — a chicken wing might result in a ""Touchdown Buffalo Wing Guacamole.""  The platform also includes a questionnaire for further personalization, taking into account event size, spice levels, flavor preferences, serving sizes, and more. ""Creating innovation that matters is a big part of our culture at Avocados From Mexico. Integrating our brand with the cultural trends around us — in this case, AI and the Big Game — gives us an opportunity to continue building our brand and growing awareness in a way that excites and engages consumers,"" said Alvaro Luque, president and CEO of Avocados From Mexico, in a statement.  Luque added that it’s important to the company to invent a tool that is helpful and makes adding avocados to celebrations an easy task. “We're incredibly proud to launch GuacAImole and hope avocado fans have fun using it to put a new spin on their guac recipes."" This isn’t the first time Avocados From Mexico has tapped technology to power its Super Bowl promotions. Last year, the company implemented Sonic DNA, allowing visitors to create AFM musical pieces when logging into their Spotify accounts, using voice technology to personalize their sounds. In years past, the company has also used blockchain tech and NFTs. Consumer goods companies are getting increasingly creative in the way they are engaging with customers ahead of the Super Bowl. Last year, Pepsico’s Quaker brand launched a TikTok campaign with NFL legend Eli Manning; Molson Coors’ Miller Light partnered with DraftKings to give consumers the chance to win $500,000 by predicting every detail of what will happen during its commercial; and Diageo’s Smirnoff turned its Super Bowl campaign into a hiring event. These multi-channel digital experiences are complementing the high-visibility Super Bowl ad spots that many leading consumer goods companies are hoping to claim — last year, they reached around $7 million in cost for 30 seconds, according to the 2023 Kellogg/Northwestern Super Bowl Ad Review.  This article first appeared on the site of sister publication CGT."
+https://www.prnewswire.com/news-releases/applitools-unveils-genai-powered-autonomous-testing-empowering-every-organization-to-transform-testing-and-brand-experience-302055535.html,"Applitools Unveils GenAI-Powered Autonomous Testing, Empowering Every Organization to Transform Testing and Brand Experience","Searching for your content... 
+In-Language News
  
-                                                                                Elizabeth Greenberg                                                                                 
-07 February 2024,
-                                                09.42am
- Research commissioned by Gigged.AI, the AI-driven talent platform, has revealed that around half (51%) of UK tech leaders are considering Generative AI (genAI) to combat skills shortages, while almost the same amount of respondents (44%) have ethical concerns about replacing employees. The survey, which was carried out by Sapio Research and interviewed over 250 senior executives across the UK during the second half of the 2023, found that 91% are experiencing a tech skills shortage, with 57% saying the situation has worsened compared to 2022. A third (34%) of organisations sampled cited the inability to find qualified candidates as the primary cause, with about a third (32%) of respondents attributing the shortage to budget constraints. To address this, only 16% are implementing ‘quiet hiring’. With 58% of interviewees experiencing a hiring freeze in 2023, about a quarter (24%) of tech leaders said they were planning to use Generative AI to upskill their existing workforce. On the subject of digital transformation, while 72% of organisations are progressing digital transformation this year, 45% expect delays due to tech skills shortages. 37% of respondents said that software development and cybersecurity skills are being most affected within their organisations by the tech skills shortage, followed by digital marketing (36%), and data engineering (27%). Gigged.AI CEO and Co-founder Rich Wilson commented: “The findings of our survey show how prominent Generative AI has become for tech leaders in a relatively short space of time. “And in the face of the growing tech skills shortage, businesses not only need, they are already planning innovative strategies to tackle the industry-wide challenge.  At the same time, ethical concerns are a factor, so that’s a conundrum for companies in 2024.” Phil Boyle, Chief Technology Officer at Cala Homes, commented: “Generative AI could be the most important technological breakthrough of our lifetime, revolutionising how we work and interact with customers. “But its potential will only be realised if we put trust and safety at the centre of this technology. This starts with security and managing data. The demand for these digital skills is vastly outstripping supply however, so at Cala we are investing in grassroots, early-careers, and training to boost knowledge and close the skills gap.” Gigged.AI CEO Rich Wilson added: “Tech leaders are under pressure across the board, but there are developing blueprints to support them, including around Generative AI and quiet hiring, when that’s done in the right way, and that’s something we’re actively engaged with across our client base.” The survey of UK tech leaders is part of Gigged.AI’s ‘How to Navigate the UK Tech Skills Shortage in 2024’ report. 
-                                                                                Elizabeth Greenberg                                                                                 
-                                                                                Staff Writer                                            
-                                         Explore  Subscribe to  © 2024 DIGIT"
-https://www.verdict.co.uk/analyst-comment/zoom-ai-companion-genai-enhanced-productivity/,GenAI Watch: Zoom stays in the AI race with Zoom AI Companion - Verdict,"Before generative AI (GenAI) arrived, Zoom was viewed as an ‘also-ran’ to the likes of Cisco, Microsoft, and Google. A new round of features added to ‘Zoom AI Companion’ represent the latest expansion of Zoom’s AI portfolio. Zoom AI Companion is a GenAI assistant launched in September 2023. It is available at no additional cost for customers with paid services assigned to their Zoom user accounts. Target audiences for the new features include admins, contact centre agents, and meeting participants. Company admins can now gain a better understanding of how Zoom AI Companion is being used across their organisation. A new analytics dashboard provides metrics such as the volume of meeting summaries generated over time or the number of employees composing chats or summarizing chat threads. Such insight is useful for identifying where time and resources are needed for spurring adoption of Zoom AI Companion. However, it comes at a cost – organisations risk making employees feel their work is being monitored for questionable purposes. It is therefore imperative that organisations clearly communicate what the data gathered is being used for – and what it is not being used for. Contact centre agents can take advantage of real-time conversation summaries before or during a customer interaction, live sentiment and speech analytics, and auto-generated post-call action items. These tools are valuable as they facilitate agent productivity and allow more meaningful customer relationships to be developed. In that respect, they dovetail with a GlobalData prediction for 2024: that the concept of a ‘contact centre’ will continue to yield to the broader concept of the ‘customer experience’ (for more, please see Cloud-Based Collaboration in 2024: Change Will Come on Multiple Fronts, January 24, 2024). Access the most comprehensive Company Profiles
-            on the market, powered by GlobalData. Save hours of research. Gain competitive edge. Your download email will arrive shortly We are confident about the
-                        unique
-                        quality of our Company Profiles. However, we want you to make the most
-                        beneficial
-                        decision for your business, so we offer a free sample that you can download by
-                        submitting the below form
-                     Whereas contact centres tend to be reactive, transactional, and generic, the customer experience is proactive, relationship-oriented, deeply personalized, and executed in real-time, largely thanks to AI. Zoom AI Companion can help businesses graduate from providing a ‘contact centre’ to providing a ‘customer experience.’ Like agents in a contact centre, meeting attendees will also see valuable productivity enhancements. When using Zoom Team Chat, Zoom AI Companion will detect intent to schedule a meeting and open a calendar invite pre-populated with attendee, date, and time information. Zoom AI Companion will also allow Zoom Whiteboard users to visually organize and structure thoughts stemming from a central idea based on user prompts, thus creating ‘mind maps.’ A third enhancement for meetings is the ability of Zoom AI Companion to use attendees’ gender pronouns from their Zoom profile when generating meeting summaries; this amounts to a novelty and nothing more. Although the announcements cover a hodgepodge of functionality, they mark the latest milestone in what has been a rapid build out of Zoom’s GenAI arsenal. That fact has intriguing implications. Before GenAI arrived, Zoom was viewed as an ‘also-ran’ to the likes of Cisco, Microsoft, and Google, whose technological heritage gave them a huge leg up in the collaboration space to anyone who dared oppose them. Since coming on the scene, GenAI has quickly become an equaliser, with rivals tapping roughly the same AI ‘treasure trove’ and sprinkling its contents platform-wide. From an AI perspective, Zoom has joined a prestigious club. 
-                The gold standard of business intelligence.
-             
+Contact Us
+ 
+ 888-776-0942
 
-                    Find out more
+from 8 AM - 10 PM ET
+ News provided by 07 Feb, 2024, 09:00 ET Share this article Applitools Intelligent Testing Platform is the first to seamlessly combine the power of code-based testing with the simplicity of codeless autonomous testing, making it accessible to all regardless of coding experience SAN MATEO, Calif., Feb. 7, 2024 /PRNewswire/ -- Applitools, the industry leader for AI-powered test automation, today announced Autonomous, the first fully autonomous test automation solution that automatically generates tests on websites and multi-page web applications and uses Natural Language Processing (NLP) to allow developers, test engineers and business users to author automated tests using plain English. Autonomous brings the power of the Applitools Intelligent Testing Platform to everyone, from developers and quality assurance (QA) professionals to digital marketers, to efficiently build, maintain and execute functional and visual tests in minutes across all environments, browsers and devices. Register for this webinar with Applitools' co-founder and CTO Adam Carmi, and DevRel Dave Piacente, to learn more: applitools.info/fae  Testing Challenges for Modern Business  The ability to deliver new digital products and features into the hands of consumers is now a competitive advantage. According to a report by TCGen, enterprises that reduce their time to market accrue greater revenue over time. As development time continues to speed up, pressure grows for development and testing teams to deliver digital experiences that render accurately all the time.  Businesses today face significant challenges in validating the functionality and appearance of their digital assets across multiple screens, browsers and devices, with UI/UX updates required multiple times a week or even per day. Traditional testing tools struggle to match the pace of development, resulting in trade-offs between test coverage, velocity and quality. This often leads to issues such as bugs in production, reduced release confidence, increased costs, slow feedback loops, and delayed timelines, prompting businesses to establish large and costly QA organizations, causing silos and inefficiencies. Introducing Applitools Intelligent Testing Platform Applitools, the leader in AI Powered Automated Testing, is transforming testing with its new Autonomous capabilities. By empowering non-technical (i.e. digital marketers, product experts, etc.) and technical team members (i.e. manual QA testers) to run visual and functional tests easily, Applitools is democratizing testing and driving high-quality, reliable products. Applitools is the only platform that allows combining codeless testing with code-based testing using existing open-source test frameworks. With the Intelligent Testing Platform, engineering and product teams reduce risk, improve delivery velocity, and deliver superior digital experiences that align with consumer expectations and business goals, ushering in a new testing standard. Applitools Autonomous crawls and scans web applications to generate and automatically maintain test cases for each page, while Visual AI validates the entire UI for any functional or visual regressions. These tests can be seamlessly integrated into CI/CD pipelines or scheduled, allowing businesses to monitor critical digital assets effortlessly. With natural language test building and contextual UI testing, teams can author tests with GenAI capabilities and leverage Visual AI to improve coverage and test reliability. This infrastructure supports running at a large scale with speed and stability that exceeds any other product in the market and provides intelligent test infrastructure that self-heals around UI changes and flexible execution options. EVERSANA, a leading provider of global commercial services to the life sciences industry, has been one of the early adopters of Applitools Autonomous. EVERSANA's agency team at EVERSANA INTOUCH has tapped into Applitools' test automation capabilities to accelerate transformation initiatives. ""Our testing process transformed when we started using the Applitools Intelligent Testing Platform,"" said Michael Blake, Senior Vice President, Development & Quality Services at EVERSANA INTOUCH. ""Through this technology, we've been able to significantly accelerate all testing and deployments, transforming processes that would take days to just hours, allowing us to deliver faster and better results for clients."" With the addition of Autonomous, the Applitools Intelligent Testing Platform stands at the forefront of AI-powered test automation across applications and documents. The platform now includes five powerful solutions that, together, will change the way organizations ensure error-free digital experiences: By combining the power of Autonomous, Preflight, Eyes, Ultrafast Grid and Execution Cloud, teams can reduce manual work, create and maintain resilient tests using plain English and involve more teams in the QA process. ""The Applitools Intelligent Testing Platform is a game-changer as it empowers tech-savvy individuals and non-developers to leverage Autonomous testing to ensure flawless digital experiences,"" said Alex Berry, CEO of Applitools. ""By harnessing Visual AI and Generative AI, we continue to advance UI test automation to streamline testing processes and expedite the delivery of flawless digital experiences.  With Autonomous and our Intelligent Testing Platform, we empower individuals from various teams to contribute to the quality of digital experiences. By fostering cross-team collaboration and putting app and digital asset quality control in all hands, bugs are prevented from reaching production so customers can save resources and invest in innovation and mission-critical endeavors."" Try the Applitools Intelligent Platform Today: https://applitools.com/  About Applitools Applitools sets the industry standard for AI-powered test automation, infusing AI into every step of the testing lifecycle. Remarkably intuitive, the Applitools Intelligent Testing Platform empowers every team member - from design, development, QA, operations, marketing and product teams – to contribute to quality assurance, regardless of their coding expertise. With Applitools, companies accelerate their testing processes, embrace comprehensive quality checks, and ensure superior product delivery in less time through proactive, continuous testing. Hundreds of the world's top brands – including more than 25% of the Fortune 500 – trust Applitools to reliably ship applications faster to delight millions of users on any device and browser, and across every screen size and operating system. Applitools is headquartered in San Mateo, California, with an R&D center in Tel Aviv, Israel. To learn more, visit applitools.com. Media Contact:Olivia HeelCatapult PR[email protected]  SOURCE Applitools Applitools, the leader in AI-enabled test automation, today announced it has appointed Alex Berry as Chief Executive Officer (CEO), Keri Cook as... Applitools, the leader of AI in test automation, has launched the full integration of its flagship technology, Visual AI, with its latest... Computer & Electronics Computer Software Computer Software Artificial Intelligence "
+https://www.neowin.net/news/genai-pcs-and-smartphones-to-capture-a-fifth-of-their-respective-markets-this-year/,GenAI PCs and smartphones to capture a fifth of their respective markets this year - Neowin,"
+38 minutes ago
+ 
+54 minutes ago
+ 
+1 hour ago
+ 
+1 hour ago
+ 
+1 hour ago
+ 
+1 hour ago
+ 
+2 hours ago
+ 
+4 hours ago
+ 
+10 hours ago
+ 
+14 hours ago
+ 
+Feb 6, 2024
+ 
+Feb 2, 2024
+ 
+4 hours ago
+ 
+Feb 6, 2024
+ 
+Feb 6, 2024
+ 
+Feb 5, 2024
+ 
+8 minutes ago
+ 
+1 hour ago
+ 
+2 hours ago
+ 
+4 hours ago
+ 
+Feb 5, 2024
+ 
+Feb 3, 2024
+ 
+Jan 21, 2024
+ 
+Jan 14, 2024
+ 
+Dec 31, 2023
+ 
+Oct 14, 2023
+ 
+Apr 11, 2023
+ 
+Mar 4, 2023
+ 
+Jan 24, 2024
+ 
+Dec 3, 2023
+ 
+Nov 22, 2023
+ 
+Nov 22, 2023
+ 
+Sep 23, 2023
+ 
+Sep 21, 2023
+ 
+Sep 13, 2023
+ 
+Sep 13, 2023
+ 
+13 hours ago
+ 
+23 hours ago
+ 
+Feb 5, 2024
+ 
+Jan 20, 2024
+ 
+Dec 6, 2023
+ 
+Jun 6, 2023
+ 
+May 28, 2023
+ 
+51 minutes ago
+ 
+Feb 6, 2024
+ 
+Feb 5, 2024
+ 
+Feb 4, 2024
+ 
+
+Paul Hill
+
+Neowin
+                ·
+    
+
+    Feb 7, 2024 08:36 EST
+    
+
+with 0 comments
+
+ For more than a year now, we have all been getting to grips with news about generative AI services that have emerged since the launch of ChatGPT. One of the issues with this technology right now is that all the processing is done in the cloud, but device manufacturers are planning to change that with local processing of AI content. According to the analyst firm IDC, AI PCs and generative AI (GenAI) smartphones will total 295 million units by the end of this year, up from just 29 million units in 2023. These devices are equipped with dedicated AI accelerators or cores, neural processing units (NPUs), and accelerated processing units (APUs) or tensor processing units (TPUs) that have been designed to process AI tasks on-device. Neowin has previously reported that PC vendors are looking to launch AI PCs around June and that Microsoft could be focusing its upcoming Windows 11 24H2 update on AI PCs. Companies behind large language models often create smaller LLMs that are designed to run locally on devices, a popular example is Meta’s Llama 2 7B which is smaller than the 13B and 70B versions that are trained on more data. “The rapid adoption of on-device GenAI capabilities and AI processors will eventually become a standard requirement for technology vendors,” said Ranjit Atwal, Senior Director Analyst at Gartner. “This ubiquity will pose challenges for vendors in differentiating themselves from competitors, making it harder to create unique selling points and drive increased revenues.” GenAI smartphones will make up the bulk of shipments in 2024, with 240 million units. AI PC shipments are estimated to reach 54.5 million by the end of the year. Despite this difference, both will make up 22% of the market share of shipments in their respective markets. In the case of AI PCs, IDC doesn’t expect this to drive end-user spending “beyond anticipated price increases.” It also said that software vendors will need time to utilize on-device AI and show its benefits to users. Source: IDC 
+
+Paul Hill
+                                                ·
                     
+Jan 31, 2024
 
-
-
- Give your business an edge with our leading industry insights. Give your business an edge with our leading industry insights.  
-
-
-
-
-
- 
-
-
-
-
-                                                                                                                                Digital Magazine: Thematic Take (monthly)                                                                                                                        
+with
+1
+                            comment
+                                                            
 
 
  
 
+Paul Hill
+                                                ·
+                    
+Jan 22, 2024
 
-                                                    I consent to Verdict Media Limited collecting my details provided via this form in accordance with  Privacy Policy
+with
+4
+                            comment
+                                s
+                                                            
 
- View all newsletters from across the GlobalData Media network. 
-		Decrypting the latest technology news 
-				Powered by
-				
- © Verdict Media Limited 2024"
-https://techfundingnews.com/founded-by-musician-this-genai-powered-platform-raises-2-5-m-to-artificially-produce-audio-faster-better-and-cheaper/,"Founded by musician, this GenAI powered platform raises £2.5M to artificially produce audio faster, better and cheaper — TFN","
-
- 
-By clicking submit, you agree to share your email address with the site owner and Mailchimp to receive marketing, updates, and other emails from the site owner. Use the unsubscribe link in those emails to opt out at any time.  
-
- 
-				By clicking submit, you agree to share your email address with the site owner and Mailchimp to receive marketing, updates, and other emails from the site owner. Use the unsubscribe link in those emails to opt out at any time.			 
 
  
-				By clicking submit, you agree to share your email address with TFN to receive marketing, updates, and other emails from the site owner. Use the unsubscribe link in the emails to opt out at any time.			 The world of audio production is on the cusp of a major transformation, and London-based startup AudioStack is at the forefront, armed with a £2.5 million pre-Series A funding round led by Quadri Ventures. Their secret weapon? Generative Artificial intelligence (GenAI).  Not too long ago, a similar platform Wondercraft, an AI-powered audio content platform, had also secured $3 million in seed funding to expand its platform and also ElevenLabs working on audio AI software landed $80 million in a Series B funding round at a valuation of $1B, hitting the unicorn status. Founded by co-founders Dr Timo Kunz, who is a musician and AI Ph.D. in 2019, along with Peadar Coyle, and Björn Ühss, AudioStack’s proprietary technology leverages a suite of AI-powered media creation tools, including script generation, text-to-speech, speech-to-speech, generative music, and dynamic versioning.  This approach empowers enterprises to construct intricate audio production workflows with unprecedented speed, surpassing real-time capabilities. By using the AI, AudioStack makes audio production cost-effective and time-efficient that remains scalable without sacrificing quality. Traditionally, audio production has been a slow, manual process, often bogged down by repetitive tasks and limited scalability. AudioStack is shattering these limitations with its end-to-end platform, seamlessly integrating AI-powered tools for various aspects of audio creation.  From generating voice-overs and crafting dynamic ad spots to synthesising custom brand voices and designing immersive soundscapes, the platform automates the entire workflow, streamlining the process and making it better altogether. The idea about AudioStack lies in the it’s ability to deliver exceptional results at an unprecedented pace. It helps create high-quality studio-grade audio assets faster than real-time, empowering users to generate thousands of variations of audio content with ease.  This opens doors to personalised experiences, tailoring audio to specific audiences based on language, voice, and even calls to action. No more waiting days for audio turnaround; AudioStack compresses the process into hours, even minutes, saving valuable time and resources. The financial implications are equally compelling. Automating workflows and leveraging AI production significantly reduces costs, making high-quality audio creation more accessible for businesses of all sizes.  This cost-effectiveness, coupled with the platform’s scalability and personalization capabilities, positions AudioStack to capitalise on the burgeoning AI-powered audio market, projected to reach a staggering $192 billion by 2032.Now, with the recent funding, the company is planning to expand its presence in the US, UK and Germany.  AudioStack’s innovative approach has already garnered the attention of industry leaders. Major ad agencies like Omnicom and Publicis, publishers such as Acast and iHeart, and global brands like McDonald’s, Porsche, and Mountain Dew are already leveraging the platform’s capabilities. This early adoption speaks volumes about the potential of AudioStack to disrupt the traditional audio production landscape. Industry experts are bullish on AudioStack’s future. Alexis van de Wyer, former CEO of AdsWizz and current board member at AudioStack, emphasises the “huge market potential” and lauds the team’s ability to address critical pain points in audio production.  Andrew Drylie, Principal at Quadri Ventures, highlights AudioStack’s “category-creating Generative AI solution” and their potential to become the “leading infrastructure for audio production globally.” With the recent funding boost, AudioStack plans to double down on successful business cases, expand their global reach, and further refine their AI-powered solutions. This journey is likely to disrupt the status quo, paving the way for a future where GenAI transforms audio production, making it faster, more efficient, and deeply personalised. © 2024 Tech Funding News - All rights reserved."
-https://www.crn.com.au/news/telstra-partners-with-microsoft-and-accenture-on-internal-genai-solutions-604874,Telstra expands use of GenAI for frontline teams - Digital - Telco - CRN Australia,"Telstra has expanded the use of two internal customer service generative AI solutions following successful pilots. Developed in partnership with Microsoft and Symantec, One Sentence Summary and Ask Telstra were built using Microsoft Cloud and its Azure OpenAI capabilities to improve the efficiency of Telstra's frontline teams. Using Azure OpenAI’s large language model, One Sentence Summary transforms recent customer notes, interactions and transactions into a summary of a customer’s recent history and status. 2023 trials showed 90 per cent of employees using the tool saved time and increased effectiveness, resulting in 20 per cent less follow-up contact. Team members also noted the tool enabled them to more quickly understand challenging or sensitive circumstances, such as those in need of priority or financial assistance. Telstra will roll out One Sentence Summary to all its contact centre and store teams throughout 2024. Ask Telstra enables employees to search the company’s extensive internal knowledge bases quickly and easily for information. Powered by the Microsoft Azure OpenAI Service and Azure AI Search, the solution gives AI generated responses to employee queries, presented via a search interface. Team members involved in the pilot were able to more quickly gather information to support customers, with over 80 per cent agreeing the technology has a positive impact on customer interactions. “We’re at a profound juncture in a new era of transformation, and it's one that we're navigating in lockstep with our partners,"" Telstra's group executive of product and technology Kim Krogh Andersen said. ""Our deep, strategic relationship with Microsoft is positioning us well to unlock value and growth as technologies like generative AI proliferate at speed.” “We’ve been on a journey of simplification and modernisation over a number of years. We've simplified our technology architecture and shifted to a 100 per cent API-first approach to product development."" ""We’re also migrating workloads to the public cloud and building reusable AI capabilities. Our collaboration with Accenture is now helping to accelerate the work we have ahead."" ""It's a massive undertaking, but it has put us in a position to now rapidly scale bespoke generative AI tools, like Ask Telstra and One Sentence Summary, that can really shift the dial when it comes to helping our teams provide quicker, more effective, and more personalised customer interactions.” “Strong, strategic partnerships, like ours with Microsoft and Accenture, are critical to our shared success. By collaborating and leveraging each other’s strengths, we can ignite innovation and deliver the best products and services for our customers."" Microsoft Australia & New Zealand MD Steven Worrall said: “It’s exciting to see Telstra continue its leadership in AI, by harnessing the power of the Microsoft Cloud and Azure OpenAI Service to enhance their employee’s productivity and increase customer satisfaction.""  Initially available to 200 Telstra frontline team members in late 2023, Ask Telstra will begin to roll out to all contact centre and store teams through 2024. “We are proud to be a part of this journey and look forward to seeing the continued impact these AI solutions have on Telstra’s frontline workers and more broadly across the organisation,” Accenture's group chief executive for technology Karthik Narain said. “Our deep partnership with Telstra is focused on accelerating its efforts to become an AI-fuelled organisation. By radically simplifying and modernising legacy data estates, Telstra is building a secure digital core to adopt and scale more advanced generative AI capabilities."" ""In addition, Telstra’s approach to developing and maintaining responsible and ethical AI is recognised by global industry bodies and will serve as a benchmark. We hope this market leading work will encourage further advancements through data and AI.”"
-https://www.pymnts.com/news/artificial-intelligence/2024/logility-adds-generative-ai-capabilities-supply-chain-planning-solutions/,Logility Adds GenAI Capabilities to Supply Chain Planning Tools,"Logility added generative artificial intelligence capabilities to its range of prescriptive supply chain planning solutions. The company aims to use the technology to help enterprises to make faster decisions and gain a competitive advantage in the market, Logility said in a Tuesday (Feb. 6) press release. “We’re entering a new era in supply chain management, where speed and precision are not just desired, they’re required,” Logility President Allan Dow said in the release. Logility’s GenAI, built on an AI-native platform, is designed to help businesses navigate supply chain data, according to the release. It provides insights through a conversational interface accessible to anyone from any department. This eliminates the need for data collation and outdated dashboards, saving time for supply chain professionals. The GenAI solution from Logility accelerates supply chain decision-making by giving teams access to information and increasing overall productivity, the release said. It acts as a liaison, bridging departmental silos, facilitating a shift from sequential processes to more fluid ones, and reducing decision latency. Clients of Logility are using the AI-first data structure to gain explainability and insights from generative AI inquiries, per the release. The solution allows for the analysis of forecast changes using large language models while ensuring data security through Microsoft Azure. Logility’s Digital Supply Chain Platform, integrated with AI and predictive analytics, delivers optimized demand, inventory, manufacturing and supply plans, according to the release. The cloud-based platform serves more than 650 clients in 80 countries. Companies are easing supply chain pressures by using generative AI to perform a variety of tasks, including sourcing new supplies, finalizing contracts, and making sure they aren’t doing business with companies tied to environmental and human rights abuses. In another recent development in the space, Blue Yonder said in December that it added generative AI capabilities to its range of supply chain solutions. For example, its Blue Yonder Orchestrator helps companies make sense of their data and use it to make decisions more quickly and intelligently. For all PYMNTS B2B and AI coverage, subscribe to the daily B2B and AI Newsletters. We’re always on the lookout for opportunities to partner with innovators and disruptors."
-https://musictech.com/news/industry/genai-powered-audiostack-raises-2-5-million-pre-series-a-round/,GenAI-powered AudioStack raises £2.5 million pre-Series A round,"The London-based company will use the funding to continue their global expansion. Credit: Yaroslav Kushta/Getty Images Get MusicTech breaking news as it happens by following us on Telegram: https://t.me/MusicTechOfficial AudioStack – a London-based GenAI-powered startup specialising in innovative audio tools for enterprises – has raised £2,500,000 in a pre-Series A funding round to shake up the audio production market. The company offers an end-to-end platform for enterprises, with the capability to scale audio production without losing any quality. Users can create audio assets quickly, giving them better quality audio that’s based on voice, language, and call-to-action, and cutting the turnaround time for audio production down to hours or potentially minutes. As stated in a press release, AudioStack is “disrupting an industry overrun with manual, antiquated, and costly processes, but is now experiencing significant change as AI permeates audio production”. Co-founder Dr. Timo Kunz has said that the funding round allows it to “accelerate our global expansion and intensify focus on successful business cases.” He continued, “This funding round will enable us to continue our global growth and double down on the business cases that are working so well: We have been helping our customers realise enormous savings throughout their creative processes while enabling them to massively scale the output of their production to levels they never dreamed of, allowing us to supercharge creativity.” The company, which was founded in 2019 by Kunz, Peadar Coyle and Björn Ühss, is working with huge ad agencies including Monicom and Publicis, publishers such as Acast and iHeart, and massive brands like McDonald’s, Mountain Dew, and Porsche. This round of pre-Series A investment, led by London-based capital market company Quadri Ventures, was backed by the likes of angel investor Fred Destin and media investor Alexis van de Wyer. Van de Wyer said, “There is huge market potential for AudioStack and this pre-Series A round will build on the impressive momentum the team have already achieved. I know from experience that large brands and agencies are crying out for a solution to the problems that hold back audio production.” According to Andrew Drylie, Principal at Quadri Ventures, Bloomberg predicts that digital ads driven by GenAI will grow to a huge $192 billion by 2032, which shows the potential of AudioStack. Get the latest news, reviews and tutorials to your inbox. The world’s leading media brand at the intersection of music and technology. © 2024 MusicTech is part of NME Networks."
+
+Paul Hill
+                                                ·
+                    
+Jan 4, 2024
+
+with
+0
+                            comment
+                                s
+                                                            
+
+
+ 
+
+Paul Hill
+                                                ·
+                    
+Oct 17, 2023
+
+with
+1
+                            comment
+                                                            
+
+
+ Login or Sign Up to read and post a comment. Please enter your reason for reporting this comment. 
+                                suicide squad kill the justice
+                                 
+                                microsoft weekly
+                                 
+                                windows 11 insider preview promo
+                                 
+                                windows 11 insider preview promo
+                                 
+                                windows
+                                 
+                                thunderx3
+                                 
+                                twirl
+                                 
+                                win 11 22h2 vs 23h2 clean
+                                 
+                                mini air12
+                                 
+                                windows 11 insider preview promo
+                                 
+                        windows 11 23h2
+                         
+                        windows 11 23h2 guide
+                         
+                        windows 10
+                         
+                        windows 11 setup
+                         
+© Since 2000 Neowin LLC.
+                                    All trademarks mentioned are the property of their respective owners.
+                                "
