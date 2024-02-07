@@ -4,9 +4,8 @@ from datetime import datetime
 import openai
 from eventregistry import *
 from GoogleNews import GoogleNews
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup
 import csv
-from urllib.parse import urlparse, urlunparse
 
 
 app = Flask(__name__)
@@ -14,7 +13,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-api_key = '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'
+api_key = 'api_key'
 
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
@@ -104,7 +103,7 @@ def update(serial):
 
 @app.route('/newsfetch')
 def news():
-    event_registry = EventRegistry(apiKey='83d4f228-220b-4e83-b65e-20b68fd205a0')
+    event_registry = EventRegistry(apiKey='apiKey')
 
     query = QueryEvents(keywords="GenAI", sourceLocationUri=event_registry.getLocationUri("USA"))
     query.setRequestedResult(RequestEventsInfo(sortBy="date", count=10))
@@ -129,22 +128,39 @@ def strip_after_character(url, character='&'):
         return url
 
 
+def scrape_data(url):
+    response = requests.get(url, verify=False)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title = soup.find('title').get_text()
+        paragraphs = soup.find_all('p')
+        text = ' '.join([p.get_text() for p in paragraphs])
+        return {'title': title, 'text': text}
+    else:
+        return None
+
 @app.route('/news')
 def news_view():
     google_news = GoogleNews()
     google_news.search('GenAI')
     news_results = google_news.results()
-
+    print(news_results[0])
     if news_results:
         urls = [link['link'] for link in news_results]  # Extract URL strings from dictionaries
         stripped_urls = [strip_after_character(url) for url in urls]  # Strip URLs
-        stripped_urls_dicts = [{'url': url} for url in stripped_urls]  # Convert back to dictionary format
+        #stripped_urls_dicts = [{'url': url} for url in stripped_urls]  # Convert back to dictionary format
+
+        scraped_data = []
+        for stripped_url in stripped_urls:
+            data = scrape_data(stripped_url)
+            if data:
+                scraped_data.append({'url': stripped_url, 'title': data['title'], 'text': data['text']})
 
         filename = 'titles.csv'
         with open(filename, 'w', newline='') as f:
-            w = csv.DictWriter(f, ['url'])
+            w = csv.DictWriter(f, ['url', 'title', 'text'])
             w.writeheader()
-            w.writerows(stripped_urls_dicts)
+            w.writerows(scraped_data)
 
         return jsonify(news_results)
     else:
