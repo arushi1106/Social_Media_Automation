@@ -4,13 +4,17 @@ from datetime import datetime
 import openai
 from eventregistry import *
 from GoogleNews import GoogleNews
+from bs4 import BeautifulSoup as bs
+import csv
+from urllib.parse import urlparse, urlunparse
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-api_key = 'api_key'
+api_key = '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'
 
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
@@ -97,9 +101,10 @@ def update(serial):
     todo = Demo.query.filter_by(serial=serial).first()
     return render_template('update.html', todo=todo)
 
+
 @app.route('/newsfetch')
 def news():
-    event_registry = EventRegistry(apiKey='apikey')
+    event_registry = EventRegistry(apiKey='83d4f228-220b-4e83-b65e-20b68fd205a0')
 
     query = QueryEvents(keywords="GenAI", sourceLocationUri=event_registry.getLocationUri("USA"))
     query.setRequestedResult(RequestEventsInfo(sortBy="date", count=10))
@@ -114,7 +119,14 @@ def news():
         return jsonify({'error': 'No news found'})
 
     return jsonify(news_list)
-    #return jsonify(result)
+
+
+def strip_after_character(url, character='&'):
+    index = url.find(character)
+    if index != -1:
+        return url[:index]
+    else:
+        return url
 
 
 @app.route('/news')
@@ -124,6 +136,16 @@ def news_view():
     news_results = google_news.results()
 
     if news_results:
+        urls = [link['link'] for link in news_results]  # Extract URL strings from dictionaries
+        stripped_urls = [strip_after_character(url) for url in urls]  # Strip URLs
+        stripped_urls_dicts = [{'url': url} for url in stripped_urls]  # Convert back to dictionary format
+
+        filename = 'titles.csv'
+        with open(filename, 'w', newline='') as f:
+            w = csv.DictWriter(f, ['url'])
+            w.writeheader()
+            w.writerows(stripped_urls_dicts)
+
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
