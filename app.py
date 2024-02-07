@@ -7,7 +7,6 @@ from GoogleNews import GoogleNews
 from bs4 import BeautifulSoup
 import csv
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -139,6 +138,7 @@ def scrape_data(url):
     else:
         return None
 
+
 @app.route('/news')
 def news_view():
     google_news = GoogleNews()
@@ -148,7 +148,7 @@ def news_view():
     if news_results:
         urls = [link['link'] for link in news_results]  # Extract URL strings from dictionaries
         stripped_urls = [strip_after_character(url) for url in urls]  # Strip URLs
-        #stripped_urls_dicts = [{'url': url} for url in stripped_urls]  # Convert back to dictionary format
+        # stripped_urls_dicts = [{'url': url} for url in stripped_urls]  # Convert back to dictionary format
 
         scraped_data = []
         for stripped_url in stripped_urls:
