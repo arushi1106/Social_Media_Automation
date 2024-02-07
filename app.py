@@ -3,13 +3,14 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import openai
 from eventregistry import *
+from GoogleNews import GoogleNews
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-api_key = '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'
+api_key = 'api_key'
 
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
@@ -98,7 +99,7 @@ def update(serial):
 
 @app.route('/newsfetch')
 def news():
-    event_registry = EventRegistry(apiKey='83d4f228-220b-4e83-b65e-20b68fd205a0')
+    event_registry = EventRegistry(apiKey='apikey')
 
     query = QueryEvents(keywords="GenAI", sourceLocationUri=event_registry.getLocationUri("USA"))
     query.setRequestedResult(RequestEventsInfo(sortBy="date", count=10))
@@ -114,6 +115,18 @@ def news():
 
     return jsonify(news_list)
     #return jsonify(result)
+
+
+@app.route('/news')
+def news_view():
+    google_news = GoogleNews()
+    google_news.search('GenAI')
+    news_results = google_news.results()
+
+    if news_results:
+        return jsonify(news_results)
+    else:
+        return jsonify({'error': 'No news'})
 
 
 if __name__ == '__main__':
