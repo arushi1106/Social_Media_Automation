@@ -1,8 +1,9 @@
+import requests
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import openai
-from eventregistry import *
 from GoogleNews import GoogleNews
+from datetime import datetime
 from bs4 import BeautifulSoup
 import csv
 
@@ -10,8 +11,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
-api_key = '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'
+api_key = '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'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
 
@@ -31,15 +31,17 @@ with app.app_context():
 
 
 @app.route('/ai')
-def ai(item):
+def ai(scraped_item, stripped_urls):
+    max_context_length = 4097
+    truncated_text = scraped_item['text'][:max_context_length]
     messages = [
         {"role": "system",
          "content": "You are a blogger. Write a blog. It should not look like raw data. Should be plagiarism "
                     "free. Should be humanly not AI written"},
         {"role": "assistant",
-         "content": item['title']},
+         "content": scraped_item['title']},
         {"role": "assistant",
-         "content": item['text']}
+         "content": truncated_text}
     ]
     response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=messages)
     print(response)
@@ -47,9 +49,7 @@ def ai(item):
     response = response.choices[0].message.content
     print(response)
     print("===========response===========")
-
-    item['blog'] = response
-
+    item = {'url': stripped_urls, 'title': scraped_item['title'], 'text': scraped_item['text'], 'blog': response}
     return item
 
 
@@ -78,31 +78,27 @@ def news_view():
     google_news = GoogleNews()
     google_news.search('GenAI')
     news_results = google_news.results()
-
     if news_results:
         urls = [link['link'] for link in news_results]  # Extract URL strings from dictionaries
         stripped_urls = [strip_after_character(url) for url in urls]  # Strip URLs
-
         scraped_data = []
         for url in stripped_urls:
             data = scrape_data(url)
             if data:
                 scraped_data.append(data)
-
         if scraped_data:
-            modified_blogs = [ai(scraped_item) for scraped_item in scraped_data if scraped_item]
-            modified_blogs_data = modified_blogs.copy()
-
+            modified_blogs = []
+            for scraped_item, stripped_url in zip(scraped_data, stripped_urls):
+                item = ai(scraped_item, stripped_url)
+                modified_blogs.append(item)
         # Write modified_blogs_data to a CSV file
         csv_filename = 'titles.csv'
         fieldnames = ['url', 'title', 'text', 'blog']
-
         with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            for data in modified_blogs_data:
+            for data in modified_blogs:
                 writer.writerow(data)
-
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
