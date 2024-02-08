@@ -12,7 +12,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-api_key = 'api_key'
+api_key = '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'
 
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
@@ -61,18 +61,19 @@ def delete(serial):
 
 
 @app.route('/ai')
-def ai():
+def ai(scraped_data):
+
+    #print("title===", scraped_data['title'])
     if request.method == 'GET':
-        user_input = request.args.get('question')
+        #news_response = requests.get('http://localhost:5000/news')  # Assuming the news endpoint is on the same server
         messages = [
             {"role": "system",
-             "content": "You are an AI bot"},
-            {"role": "user",
-             "content": "Capital of India"},
+             "content": "You are a blogger. Write a blog. It should not look like a raw data. Should be plagiarism "
+                        "free. Should be humanly not AI written"},
             {"role": "assistant",
-             "content": "New Delhi"},
-            {"role": "user",
-             "content": user_input}
+             "content": scraped_data['title']},
+            {"role": "assistant",
+             "content": scraped_data['text']}
         ]
         response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=messages)
         print("=========response============")
@@ -144,21 +145,34 @@ def news_view():
     google_news = GoogleNews()
     google_news.search('GenAI')
     news_results = google_news.results()
-    print(news_results[0])
+    #print(news_results[0])
     if news_results:
         urls = [link['link'] for link in news_results]  # Extract URL strings from dictionaries
         stripped_urls = [strip_after_character(url) for url in urls]  # Strip URLs
         # stripped_urls_dicts = [{'url': url} for url in stripped_urls]  # Convert back to dictionary format
 
+        modified_blogs = []
         scraped_data = []
+
         for stripped_url in stripped_urls:
             data = scrape_data(stripped_url)
             if data:
-                scraped_data.append({'url': stripped_url, 'title': data['title'], 'text': data['text']})
+                title = data['title']
+                text = data['text']
+                scraped_data.append({'url': stripped_url, 'title': title, 'text': text})
+                #print(scraped_data)
+
+            for scraped_item in scraped_data:
+                #print("DEBUG: Scraped Item:", scraped_item)
+                modified_blog = ai(scraped_item)
+                if modified_blog:
+                    blog = modified_blog
+                    modified_blogs.append(blog)
+                scraped_data.append({'blog': modified_blog})
 
         filename = 'titles.csv'
-        with open(filename, 'w', newline='') as f:
-            w = csv.DictWriter(f, ['url', 'title', 'text'])
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            w = csv.DictWriter(f, ['url', 'title', 'text', 'blog'])
             w.writeheader()
             w.writerows(scraped_data)
 
