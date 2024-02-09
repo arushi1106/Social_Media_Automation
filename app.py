@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-api_key = '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'
+api_key = 'api_key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
 
