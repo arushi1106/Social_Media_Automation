@@ -118,7 +118,7 @@ def linkedin(item):
     blog = item['blog']
 
     data = {
-        "author": "urn:li:person:arushi-jain-73424b215",
+        "author": "urn:li:member:arushi-jain-73424b215",
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
