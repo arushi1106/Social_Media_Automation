@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-api_key = 'api_key'
+api_key = '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'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
 
@@ -49,7 +49,13 @@ def ai(scraped_item, stripped_urls):
     response = response.choices[0].message.content
     print(response)
     print("===========response===========")
-    item = {'url': stripped_urls, 'title': scraped_item['title'], 'text': scraped_item['text'], 'blog': response}
+    item = {'url': stripped_urls,
+            'title': scraped_item['title'],
+            'text': scraped_item['text'],
+            'blog': response}
+
+    linkedin(item)
+
     return item
 
 
@@ -102,6 +108,45 @@ def news_view():
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
+
+
+def linkedin(item):
+    client_id = '862fr2bt6pb2do'
+    client_secret = 'GDq3nPz9I1i7jvGh'
+    redirect_uri = 'https://www.linkedin.com/developers/tools/oauth/redirect'
+    access_token = "AQUlh_ChYiHwIAIr_kkil75emU0s55ObvHmgnkPjXkgjfcfqMYDn0iAb2fdg7sYhO_-9UG8eUTEovsdI51SzaAWV_gRQsuLMg-JoVCTGZZB0dU9O7zmnVYXwzqS0eXPUMzykkFU3l9N_Gmy55rxeRs6t-rKmqgLVVo8dP5Zf3QLHSajTn-nQOiIWpZb03UDr09IYsd7TTE4ZgaBjsIVm6TnIsUimI_GkZJRmCucYe4C0VEm_9jHR38fhzFvbrePYrczdF7J2ILeN97Z_96pocI2XgOy5ElAezaPAaI9gH8ktyWMF04VVjsXQgsp30Jm5V_8BttBkiHzQt70mKlcFs1Z92JffUg"
+    blog = item['blog']
+
+    data = {
+        "author": "urn:li:member:arushi-jain-73424b215",
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {
+            "com.linkedin.ugc.ShareContent": {
+                "shareCommentary": {
+                    "text": blog
+                },
+                "shareMediaCategory": "NONE"
+            }
+        },
+        "visibility": {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+        }
+    }
+
+    # Make a POST request to share the blog
+    url = 'https://api.linkedin.com/v2/ugcPosts'
+    headers = {'Authorization': 'Bearer ' + access_token,
+               'Content-Type': 'application/json',
+               'X-Restli-Protocol-Version': '2.0.0'}
+    response = requests.post(url, headers=headers, json=data)
+
+    # Handle the response
+    if response.status_code == 201:
+        print("Blog shared successfully!")
+    else:
+        print("Error sharing blog:", response.text)
+
+    return item
 
 
 if __name__ == '__main__':
