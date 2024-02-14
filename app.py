@@ -1,11 +1,13 @@
+import csv
+import time
+from datetime import datetime
+import openai
 import requests
+from GoogleNews import GoogleNews
+from bs4 import BeautifulSoup
+from linkedin_api.clients.restli.client import RestliClient
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import openai
-from GoogleNews import GoogleNews
-from datetime import datetime
-from bs4 import BeautifulSoup
-import csv
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
@@ -44,18 +46,17 @@ def ai(scraped_item, stripped_urls):
          "content": truncated_text}
     ]
     response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=messages)
-    print(response)
-    print("===============================")
+    # print(response)
+    # print("===============================")
     response = response.choices[0].message.content
-    print(response)
-    print("===========response===========")
+    # print(response)
+    # print("===========response===========")
     item = {'url': stripped_urls,
             'title': scraped_item['title'],
             'text': scraped_item['text'],
             'blog': response}
 
-    linkedin(item)
-
+    share(response)
     return item
 
 
@@ -110,43 +111,40 @@ def news_view():
         return jsonify({'error': 'No news'})
 
 
-def linkedin(item):
-    client_id = '862fr2bt6pb2do'
-    client_secret = 'GDq3nPz9I1i7jvGh'
-    redirect_uri = 'https://www.linkedin.com/developers/tools/oauth/redirect'
-    access_token = "AQUlh_ChYiHwIAIr_kkil75emU0s55ObvHmgnkPjXkgjfcfqMYDn0iAb2fdg7sYhO_-9UG8eUTEovsdI51SzaAWV_gRQsuLMg-JoVCTGZZB0dU9O7zmnVYXwzqS0eXPUMzykkFU3l9N_Gmy55rxeRs6t-rKmqgLVVo8dP5Zf3QLHSajTn-nQOiIWpZb03UDr09IYsd7TTE4ZgaBjsIVm6TnIsUimI_GkZJRmCucYe4C0VEm_9jHR38fhzFvbrePYrczdF7J2ILeN97Z_96pocI2XgOy5ElAezaPAaI9gH8ktyWMF04VVjsXQgsp30Jm5V_8BttBkiHzQt70mKlcFs1Z92JffUg"
-    blog = item['blog']
-
-    data = {
-        "author": "urn:li:member:arushi-jain-73424b215",
-        "lifecycleState": "PUBLISHED",
-        "specificContent": {
-            "com.linkedin.ugc.ShareContent": {
-                "shareCommentary": {
-                    "text": blog
-                },
-                "shareMediaCategory": "NONE"
-            }
-        },
-        "visibility": {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+def share(blog_content):
+    url = "https://api.linkedin.com/v2/ugcPosts"
+    if url:
+        #url = "https://api.linkedin.com/v2/ugcPosts"
+        access_token = "AQVlKkFa50e_3oc_i-nKQdstVzHpdwSyuYRjPYXOXzRKask85-hWJDT9G-WSdW8cEgc0cUGXDwg5WuSeaMOcm_axmyNt6eqGpcIfyhhwO1uYtY--jfJNmggExLACJS-9DVIGS1v3fsixIZzTMzka9jlIn3lx3iXkreOOH-4bOcUUg9YppSnqUOHQSufa8R98JCzqxz_8QGkgSVhiqygG5HSUrb3qi-mdlDs_kHivzjPFPpakpya2MLy63r5N_-gKsGbUcM4FY5rriEf89l7IzA99-2O70h4tf1RbzUyHi1V4jb-u0u_p5sVyydMZHbZc6Nc-h2RWcWFH922QHS5kgH4mkB3dfw"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
         }
-    }
 
-    # Make a POST request to share the blog
-    url = 'https://api.linkedin.com/v2/ugcPosts'
-    headers = {'Authorization': 'Bearer ' + access_token,
-               'Content-Type': 'application/json',
-               'X-Restli-Protocol-Version': '2.0.0'}
-    response = requests.post(url, headers=headers, json=data)
+        data = {
+            "author": "urn:li:person:Ud1xZb_nTB",
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {
+                        "text": blog_content
+                    },
+                    "shareMediaCategory": "NONE"
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }
+        }
 
-    # Handle the response
-    if response.status_code == 201:
-        print("Blog shared successfully!")
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 201:
+            print("Successfully shared on LinkedIn!")
+        else:
+            print(f"Failed to share on LinkedIn. Status code: {response.status_code}")
+            print(response.text)
     else:
-        print("Error sharing blog:", response.text)
-
-    return item
+        print("not POST method")
 
 
 if __name__ == '__main__':
