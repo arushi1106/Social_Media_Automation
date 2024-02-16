@@ -1,17 +1,17 @@
+import csv
+from datetime import datetime
+import openai
 import requests
+from GoogleNews import GoogleNews
+from bs4 import BeautifulSoup
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import openai
-from GoogleNews import GoogleNews
-from datetime import datetime
-from bs4 import BeautifulSoup
-import csv
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-api_key = 'api_key'
+api_key = 'open-ai api key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
 
@@ -30,26 +30,29 @@ with app.app_context():
     db.create_all()
 
 
-@app.route('/ai')
+@app.route('/ai', methods=['POST'])
 def ai(scraped_item, stripped_urls):
     max_context_length = 4097
     truncated_text = scraped_item['text'][:max_context_length]
     messages = [
         {"role": "system",
-         "content": "You are a blogger. Write a blog. It should not look like raw data. Should be plagiarism "
-                    "free. Should be humanly not AI written"},
+         "content": "You are a blogger. Write a blog. It should not look like raw data. Should be plagiarism free. Should be humanly not AI written."},
         {"role": "assistant",
          "content": scraped_item['title']},
         {"role": "assistant",
          "content": truncated_text}
     ]
     response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=messages)
-    print(response)
-    print("===============================")
+    print("Original response length:", len(response.choices[0].message.content))
+    # print("===============================")
     response = response.choices[0].message.content
-    print(response)
-    print("===========response===========")
-    item = {'url': stripped_urls, 'title': scraped_item['title'], 'text': scraped_item['text'], 'blog': response}
+    # print("===========response===========")
+    item = {'url': stripped_urls,
+            'title': scraped_item['title'],
+            'text': scraped_item['text'],
+            'blog': response}
+    title = scraped_item['title']
+    share(response, title)
     return item
 
 
@@ -102,6 +105,40 @@ def news_view():
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
+
+
+def share(blog_content, title):
+    url = "https://api.linkedin.com/v2/ugcPosts"
+    if url:
+        # url = "https://api.linkedin.com/v2/ugcPosts"
+        access_token = "linkedin access token"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+        data = {
+            "author": "urn:li:person:User_id",
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {
+                        "text": f"{title}\n\n{blog_content}"
+                    },
+                    "shareMediaCategory": "NONE",
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }
+        }
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 201:
+            print("Successfully shared on LinkedIn!")
+        else:
+            print(f"Failed to share on LinkedIn. Status code: {response.status_code}")
+            print(response.text)
+    else:
+        print("not POST method")
 
 
 if __name__ == '__main__':
