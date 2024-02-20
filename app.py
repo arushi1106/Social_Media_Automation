@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-api_key = 'open-ai api key'
+api_key = 'open ai api key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
 
@@ -36,7 +36,7 @@ def ai(scraped_item, stripped_urls):
     truncated_text = scraped_item['text'][:max_context_length]
     messages = [
         {"role": "system",
-         "content": "You are a blogger. Write a blog. It should not look like raw data. Should be plagiarism free. Should be humanly not AI written."},
+         "content": "You are a blogger. Write a blog in 2 paragraphs only. It should not look like raw data. Should be plagiarism free. Should be humanly not AI written."},
         {"role": "assistant",
          "content": scraped_item['title']},
         {"role": "assistant",
@@ -117,7 +117,7 @@ def share(blog_content, title):
             "Content-Type": "application/json",
         }
         data = {
-            "author": "urn:li:person:User_id",
+            "author": "urn:li:person:user ID",
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
