@@ -1,33 +1,18 @@
 import csv
-from datetime import datetime
 import openai
 import requests
 from GoogleNews import GoogleNews
 from bs4 import BeautifulSoup
 from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from pymongo import MongoClient
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-api_key = 'open ai api key'
+
+client = MongoClient("MongoDB_connection_string")
+db = client.qbdb.my_collection
+api_key = 'openAI_api_key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
-
-
-class Demo(db.Model):
-    serial = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    desc = db.Column(db.String(500), nullable=False)
-    date_created = db.Column(db.DateTime, default=datetime)
-
-    def __repr__(self) -> str:
-        return f'{self.Serial}-{self.title}'
-
-
-with app.app_context():
-    db.create_all()
 
 
 @app.route('/ai', methods=['POST'])
@@ -53,6 +38,12 @@ def ai(scraped_item, stripped_urls):
             'blog': response}
     title = scraped_item['title']
     share(response, title)
+    documents = [{'url': stripped_urls,
+                  'title': scraped_item['title'],
+                  'text': scraped_item['text'],
+                  'blog': response}]
+    db.create_index('url', unique=True)
+    db.insert_many(documents)
     return item
 
 
@@ -111,13 +102,14 @@ def share(blog_content, title):
     url = "https://api.linkedin.com/v2/ugcPosts"
     if url:
         # url = "https://api.linkedin.com/v2/ugcPosts"
-        access_token = "linkedin access token"
+        access_token = "linkedin_access_token"
+
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
         }
         data = {
-            "author": "urn:li:person:user ID",
+            "author": "urn:li:person:USERID",
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
