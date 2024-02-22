@@ -1,70 +1,9 @@
 import csv
-import openai
-import requests
-from GoogleNews import GoogleNews
-from bs4 import BeautifulSoup
 from flask import Flask, jsonify
-from pymongo import MongoClient
-
+from openai import ai
+from scraping import scrape_data, strip_after_character
+from GoogleNews import GoogleNews
 app = Flask(__name__)
-
-client = MongoClient("MongoDB_connection_string")
-db = client.qbdb.my_collection
-api_key = 'openAI_api_key'
-API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
-openai.api_key = api_key
-
-
-@app.route('/ai', methods=['POST'])
-def ai(scraped_item, stripped_urls):
-    max_context_length = 4097
-    truncated_text = scraped_item['text'][:max_context_length]
-    messages = [
-        {"role": "system",
-         "content": "You are a blogger. Write a blog in 2 paragraphs only. It should not look like raw data. Should be plagiarism free. Should be humanly not AI written."},
-        {"role": "assistant",
-         "content": scraped_item['title']},
-        {"role": "assistant",
-         "content": truncated_text}
-    ]
-    response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=messages)
-    print("Original response length:", len(response.choices[0].message.content))
-    # print("===============================")
-    response = response.choices[0].message.content
-    # print("===========response===========")
-    item = {'url': stripped_urls,
-            'title': scraped_item['title'],
-            'text': scraped_item['text'],
-            'blog': response}
-    title = scraped_item['title']
-    share(response, title)
-    documents = [{'url': stripped_urls,
-                  'title': scraped_item['title'],
-                  'text': scraped_item['text'],
-                  'blog': response}]
-    db.create_index('url', unique=True)
-    db.insert_many(documents)
-    return item
-
-
-def strip_after_character(url, character='&'):
-    index = url.find(character)
-    if index != -1:
-        return url[:index]
-    else:
-        return url
-
-
-def scrape_data(url):
-    response = requests.get(url, verify=False)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        title = soup.find('title').get_text()
-        paragraphs = soup.find_all('p')
-        text = ' '.join([p.get_text() for p in paragraphs])
-        return {'title': title, 'text': text}
-    else:
-        return None
 
 
 @app.route('/')
@@ -96,41 +35,6 @@ def news_view():
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
-
-
-def share(blog_content, title):
-    url = "https://api.linkedin.com/v2/ugcPosts"
-    if url:
-        # url = "https://api.linkedin.com/v2/ugcPosts"
-        access_token = "linkedin_access_token"
-
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-        }
-        data = {
-            "author": "urn:li:person:USERID",
-            "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {
-                        "text": f"{title}\n\n{blog_content}"
-                    },
-                    "shareMediaCategory": "NONE",
-                }
-            },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            }
-        }
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 201:
-            print("Successfully shared on LinkedIn!")
-        else:
-            print(f"Failed to share on LinkedIn. Status code: {response.status_code}")
-            print(response.text)
-    else:
-        print("not POST method")
 
 
 if __name__ == '__main__':

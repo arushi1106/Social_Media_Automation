@@ -1,0 +1,22 @@
+import requests
+from bs4 import BeautifulSoup
+
+
+def strip_after_character(url, character='&'):
+    index = url.find(character)
+    if index != -1:
+        return url[:index]
+    else:
+        return url
+
+
+def scrape_data(url):
+    response = requests.get(url, verify=False)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        title = soup.find('title').get_text()
+        paragraphs = soup.find_all('p')
+        text = ' '.join([p.get_text() for p in paragraphs])
+        return {'title': title, 'text': text}
+    else:
+        return None

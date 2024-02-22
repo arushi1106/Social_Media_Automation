@@ -1,11 +1,10 @@
 import requests
-import pandas as pd
 import time
 from random import choice
+from openai_functions import ai
 
 graph_url = 'https://graph.facebook.com/v19.0/'
 token = "meta_developer_long_lived_token"
-file = pd.read_csv("titles.csv")
 pexels_api_key = "pexels_api_key"
 pexels_url = "https://api.pexels.com/v1/search"
 
@@ -61,7 +60,7 @@ previous_image_urls = set()
 
 def main():
     while True:
-        title = choice(file['blog'])
+        title = ai()
         pexels_data = get_pexels_data(pexels_api_key, pexels_url)
 
         if pexels_data is None:
