@@ -1,6 +1,6 @@
 import csv
 from flask import Flask, jsonify
-from openai import ai
+from gpt import ai
 from scraping import scrape_data, strip_after_character
 from GoogleNews import GoogleNews
 app = Flask(__name__)
