@@ -5,14 +5,14 @@ def share(blog_content, title):
     url = "https://api.linkedin.com/v2/ugcPosts"
     if url:
         # url = "https://api.linkedin.com/v2/ugcPosts"
-        access_token = "AQWKlP6cx4ywRJCp1WYRIEr4LGtQ17BHLfciBvsJtT1id2rBOT2vXm9DKAjudqSILdUTz3l5kToUIY5vVUk9X-4d1lPrIwjXnKMca7-zX5DJNW-fdmll4XbsX_PCKhBXSJkvDq5zSmeQPlKQAW_b65ptFBiDLenV3giYvDx293TrMgOIryeVL0TBwerWPN0LmyHO3LfRRW4qIAsTmhTYagFL0Jwoax2-yppqE0mA6jVJflPdrUxPB2n4M8tlgIERsCIVSM8xfAD3RUtxnHbc1oLoOizeyDUtKI-4CEw2feAf-5SU-wFVR-4h7tgGVtPt81wqMyc2wXXhR_xk2THQKPWC56ZiDw"
+        access_token = "linkedin_access_token"
 
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
         }
         data = {
-            "author": "urn:li:person:MJ99SrG6ZL",
+            "author": "urn:li:person:USERID",
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {

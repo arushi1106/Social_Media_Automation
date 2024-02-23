@@ -4,10 +4,10 @@ from linkedin import share
 from pymongo.errors import DuplicateKeyError
 
 
-api_key = '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'
+api_key = 'openAI_api_key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
-client = MongoClient("mongodb+srv://jainarushi651:resetpassword11062002@cluster0.edkre4f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("MongoDB_connection_string")
 db = client.qbdb.my_collection
 
 

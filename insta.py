@@ -4,8 +4,8 @@ from random import choice
 from gpt import ai
 
 graph_url = 'https://graph.facebook.com/v19.0/'
-token = "EAAKgK1ZA4l7YBO914jwlgw2NuodrUtRHZCPyhz2slkPI2uPkU8A4kxK036KMKZAR5vOoCvHqoTpTozNcvHxughtQc8MmHNZBR9bXcZB1C4B01VECLbdlyDKHtDAgYlfeveNetItZAHrZC1XcEmEpl4XCPZC3y7aZAhOjK55cEOMMzLlcveD2IB49VUU1RKL0ua2Vo"
-pexels_api_key = "9KJsD81XxIWPasBJ4XeTPVPSfGfmDAKVsMmpLjGP3ZiHKjw2GJ6ZEbqd"
+token = "meta_developer_long_lived_token"
+pexels_api_key = "pexels_api_key"
 pexels_url = "https://api.pexels.com/v1/search"
 
 
@@ -21,7 +21,7 @@ def get_pexels_data(api_key, pexels_url):
         return None
 
 
-def post_image(title, pexels_data, instagram_account_id='17841464548297432', access_token=token):
+def post_image(title, pexels_data, instagram_account_id='instagram_numericID', access_token=token):
     captions = title
 
     if not pexels_data:
@@ -45,7 +45,7 @@ def post_image(title, pexels_data, instagram_account_id='17841464548297432', acc
     return container_id
 
 
-def publish_container(creation_id, instagram_account_id='17841464548297432', access_token=token):
+def publish_container(creation_id, instagram_account_id='instagram_numericID', access_token=token):
     url = graph_url + instagram_account_id + '/media_publish'
     param = {'access_token': access_token, 'creation_id': creation_id}
     response = requests.post(url, params=param)
