@@ -1,7 +1,7 @@
 import requests
 import time
 from random import choice
-from openai_functions import ai
+from openai import ai
 
 graph_url = 'https://graph.facebook.com/v19.0/'
 token = "meta_developer_long_lived_token"
