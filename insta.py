@@ -21,8 +21,8 @@ def get_pexels_data(api_key, pexels_url):
         return None
 
 
-def post_image(title, pexels_data, instagram_account_id='instagram_numericID', access_token=token):
-    captions = title
+def post_image(blog_text, pexels_data, instagram_account_id='instagram_numericID', access_token=token):
+    captions = blog_text  # Use the generated blog text as the caption
 
     if not pexels_data:
         print("Error: No Pexels data available.")
@@ -60,22 +60,13 @@ previous_image_urls = set()
 
 def main(scraped_item, stripped_urls):
     while True:
-        title = ai(scraped_item, stripped_urls)  # Add arguments to the ai function call
+        blog_text = ai(scraped_item, stripped_urls)
         pexels_data = get_pexels_data(pexels_api_key, pexels_url)
 
         if pexels_data is None:
             print("Error fetching Pexels data. Retrying...")
             continue
 
-        '''image_url = pexels_data['src']['medium']
-
-        # Check if the image has already been posted
-        if image_url in previous_image_urls:
-            print("Image already posted. Choosing a new one.")
-            continue
-
-        previous_image_urls.add(image_url)'''
-
-        creation_id = post_image(title, pexels_data)
+        creation_id = post_image(blog_text, pexels_data)
         publish_container(creation_id)
         time.sleep(60)

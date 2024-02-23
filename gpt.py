@@ -16,7 +16,7 @@ def ai(scraped_item, stripped_urls):
     truncated_text = scraped_item['text'][:max_context_length]
     messages = [
         {"role": "system",
-         "content": "You are a blogger. Write a blog in 2 paragraphs only. It should not look like raw data. Should be plagiarism free. Should be humanly not AI written."},
+         "content": "You are a blogger. Compose a blog post in only two paragraphs. Ensure that the blog post is well-written and free of plagiarism, and that it does not resemble raw data."},
         {"role": "assistant",
          "content": scraped_item['title']},
         {"role": "assistant",
@@ -41,4 +41,4 @@ def ai(scraped_item, stripped_urls):
         print(f"Skipping duplicate URL: {stripped_urls}")
         return None  # Re-raise other BulkWriteErrors
 
-    return item
+    return response
