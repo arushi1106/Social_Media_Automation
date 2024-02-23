@@ -3,6 +3,7 @@ from flask import Flask, jsonify
 from gpt import ai
 from scraping import scrape_data, strip_after_character
 from GoogleNews import GoogleNews
+from insta import publish_container
 app = Flask(__name__)
 
 
@@ -24,7 +25,6 @@ def news_view():
             for scraped_item, stripped_url in zip(scraped_data, stripped_urls):
                 item = ai(scraped_item, stripped_url)
                 modified_blogs.append(item)
-        # Write modified_blogs_data to a CSV file
         csv_filename = 'titles.csv'
         fieldnames = ['url', 'title', 'text', 'blog']
         with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:

@@ -79,7 +79,3 @@ def main():
         creation_id = post_image(title, pexels_data)
         publish_container(creation_id)
         time.sleep(60)
-
-
-if __name__ == "__main__":
-    main()
