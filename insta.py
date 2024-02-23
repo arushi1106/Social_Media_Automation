@@ -58,9 +58,9 @@ def publish_container(creation_id, instagram_account_id='17841464548297432', acc
 previous_image_urls = set()
 
 
-def main():
+def main(scraped_item, stripped_urls):
     while True:
-        title = ai()
+        title = ai(scraped_item, stripped_urls)  # Add arguments to the ai function call
         pexels_data = get_pexels_data(pexels_api_key, pexels_url)
 
         if pexels_data is None:

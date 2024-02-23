@@ -3,7 +3,7 @@ from flask import Flask, jsonify
 from gpt import ai
 from scraping import scrape_data, strip_after_character
 from GoogleNews import GoogleNews
-from insta import publish_container
+from insta import main
 app = Flask(__name__)
 
 
@@ -31,7 +31,14 @@ def news_view():
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for data in modified_blogs:
-                writer.writerow(data)
+                if data is not None:
+                    data_to_write = {key: value for key, value in data.items() if key != '_id'}
+                    writer.writerow(data_to_write)
+        post = main(scraped_item, stripped_urls)
+        if post:
+            print("success")
+        else:
+            print("fail")
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
