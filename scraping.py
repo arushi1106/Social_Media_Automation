@@ -14,9 +14,16 @@ def scrape_data(url):
     response = requests.get(url, verify=False)
     if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
-        title = soup.find('title').get_text()
+
+        title_tag = soup.find('title')
+        if title_tag:
+            title = title_tag.get_text()
+        else:
+            title = 'Title not found'
+
         paragraphs = soup.find_all('p')
         text = ' '.join([p.get_text() for p in paragraphs])
+
         return {'title': title, 'text': text}
     else:
         return None

@@ -13,8 +13,8 @@ def news_view():
     google_news.search('GenAI')
     news_results = google_news.results()
     if news_results:
-        urls = [link['link'] for link in news_results]  # Extract URL strings from dictionaries
-        stripped_urls = [strip_after_character(url) for url in urls]  # Strip URLs
+        urls = [link['link'] for link in news_results]
+        stripped_urls = [strip_after_character(url) for url in urls]
         scraped_data = []
         for url in stripped_urls:
             data = scrape_data(url)
@@ -32,13 +32,10 @@ def news_view():
             writer.writeheader()
             for data in modified_blogs:
                 if data is not None:
-                    data_to_write = {key: value for key, value in data.items() if key != '_id'}
-                    writer.writerow(data_to_write)
-        post = main(scraped_item, stripped_urls)
-        if post:
-            print("success")
-        else:
-            print("fail")
+                    writer.writerow(data)
+
+        main()
+
         return jsonify(news_results)
     else:
         return jsonify({'error': 'No news'})
