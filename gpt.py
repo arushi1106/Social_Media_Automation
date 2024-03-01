@@ -7,12 +7,18 @@ from pymongo.errors import DuplicateKeyError
 api_key = 'openAI_api_key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
-client = MongoClient("connection")
+client = MongoClient("MongoDB_connection")
 db = client.qbdb.my_collection
 
 
 def ai(scraped_item, stripped_urls):
     max_context_length = 4097
+    messages = [
+        {"role": "system",
+         "content": "You are a blogger. You need to write a blog in two paragraphs that is plagiarism-free, written in a humanly way, and not resemble raw data. Give hashtags in lowercase. The source should not be revealed."},
+        {"role": "assistant",
+         "content": scraped_item['title']}
+    ]
 
     if 'text' in scraped_item and scraped_item['text']:
         text_content = scraped_item['text']
@@ -20,12 +26,7 @@ def ai(scraped_item, stripped_urls):
             truncated_text = text_content[:max_context_length]
         else:
             truncated_text = text_content
-
         messages = [
-            {"role": "system",
-             "content": "You are a blogger and need to write a blog in two paragraphs. The content should be plagiarism-free, written in a humanly way, and not resemble raw data. Hashtags should be in lowercase. The source should not be revealed."},
-            {"role": "assistant",
-             "content": scraped_item['title']},
             {"role": "assistant",
              "content": truncated_text}
     ]

@@ -32,7 +32,8 @@ def news_view():
             writer.writeheader()
             for data in modified_blogs:
                 if data is not None:
-                    writer.writerow(data)
+                    data_to_write = {key: value for key, value in data.items() if key in fieldnames}
+                    writer.writerow(data_to_write)
 
         main()
 
