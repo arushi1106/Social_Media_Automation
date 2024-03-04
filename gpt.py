@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 api_key = 'openAI_api_key'
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 openai.api_key = api_key
-client = MongoClient("MongoDB_connection")
+client = MongoClient("connection")
 db = client.qbdb.my_collection
 
 
@@ -15,7 +15,7 @@ def ai(scraped_item, stripped_urls):
     max_context_length = 4097
     messages = [
         {"role": "system",
-         "content": "You are a blogger. You need to write a blog in two paragraphs that is plagiarism-free, written in a humanly way, and not resemble raw data. Give hashtags in lowercase. The source should not be revealed."},
+         "content": "You are a blogger. Write a blog post consisting of exactly two paragraphs. Generate hashtags in lowercase. Ensure that the blog is free of plagiarism, does not reveal the use of AI, avoid resembling raw data, and appears as if it was written by a human. Please do not mention the source of the blog post."},
         {"role": "assistant",
          "content": scraped_item['title']}
     ]
@@ -31,7 +31,14 @@ def ai(scraped_item, stripped_urls):
              "content": truncated_text}
     ]
     response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=messages)
-    print("Original response length:", len(response.choices[0].message.content))
+    original_response_length = len(response.choices[0].message.content)
+
+    # Skip responses with original length less than 100
+    if original_response_length < 100:
+        print(f"Skipping response with original length less than 100: {original_response_length}")
+        return None
+
+    print("Original response length:", original_response_length)
     # print("===============================")
     response = response.choices[0].message.content
     # print("===========response===========")

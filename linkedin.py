@@ -10,7 +10,7 @@ def share(blog_content, title):
         "Content-Type": "application/json",
     }
     data = {
-        "author": "urn:li:person:UserID",
+        "author": "urn:li:person:userID",
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {

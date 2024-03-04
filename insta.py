@@ -1,16 +1,18 @@
 import requests
 import pandas as pd
 import time
+import random
+
 
 graph_url = 'https://graph.facebook.com/v15.0/'
-token = 'meta_access_token'
+token = 'meta_long_live_access_token'
 pexels_api_key = 'pexels_api_key'
 pexels_url = "https://api.pexels.com/v1/search"
 
 
-def pexels():
+def pexels(query='computer', per_page=5, page=1):
     headers = {"Authorization": pexels_api_key}
-    params = {'query': 'computer', 'per_page': 5, 'page': 1}
+    params = {'query': query, 'per_page': per_page, 'page': page}
 
     response = requests.get(pexels_url, headers=headers, params=params)
     data = response.json()
@@ -21,13 +23,18 @@ def pexels():
 
 
 def post_image(instagram_account_id='instagramID_numerics', access_token=token):
-    image_urls = pexels()
+    query = random.choice(['technology', 'laptop', 'ai', 'computer'])
+
+    image_urls = pexels(query=query)
     if not image_urls:
         print("No images found.")
         return
 
     caption = pd.read_csv('titles.csv')
-    captions = caption['blog']
+    if not caption.empty and 'blog' in caption:
+        captions = random.choice(caption['blog'])
+    else:
+        print("No captions")
 
     for i, image_url in enumerate(image_urls):
         url = graph_url + instagram_account_id + '/media'
