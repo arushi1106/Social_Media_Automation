@@ -1,0 +1,24 @@
+.env
+.env.local
+.env.*.local
+web/.env.local
+
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+web/node_modules/
+web/.next/
+web/out/
+web/.turbo/
+
+.DS_Store
+.idea/
+
+# Keep legacy compiled artifacts out of new commits
+__pycache__/

@@ -1,70 +1,64 @@
-from flask import Flask, render_template, request, redirect
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, UTC
-
+import csv
+import os
+from flask import Flask, jsonify
+from gpt import ai
+from scraping import scrape_data, strip_after_character
+from GoogleNews import GoogleNews
+from insta import main
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///demo.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+
+# Legacy scrape-and-publish entry point. Content Studio uses `make dev-api` / `make dev-web`.
+# This file is not imported by FastAPI or Next.js.
 
 
-class Demo(db.Model):
-    serial = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    desc = db.Column(db.String(500), nullable=False)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self) -> str:
-        return f'{self.Serial}-{self.title}'
+def _legacy_publish_allowed() -> bool:
+    return os.environ.get("ALLOW_LEGACY_PUBLISH") == "1"
 
 
-with app.app_context():
-    db.create_all()
+@app.route('/')
+def news_view():
+    if not _legacy_publish_allowed():
+        return jsonify({
+            "error": "Legacy Flask publisher is disabled. Use make dev-api and make dev-web for Content Studio.",
+            "hint": "Set ALLOW_LEGACY_PUBLISH=1 only if you intend to run the old scrape-and-publish path.",
+        }), 403
+    google_news = GoogleNews()
+    google_news.search('GenAI')
+    news_results = google_news.results()
+    if news_results:
+        urls = [link['link'] for link in news_results]
+        stripped_urls = [strip_after_character(url) for url in urls]
+        scraped_data = []
+        for url in stripped_urls:
+            data = scrape_data(url)
+            if data:
+                scraped_data.append(data)
+        if scraped_data:
+            modified_blogs = []
+            for scraped_item, stripped_url in zip(scraped_data, stripped_urls):
+                item = ai(scraped_item, stripped_url)
+                modified_blogs.append(item)
+        csv_filename = 'titles.csv'
+        fieldnames = ['url', 'title', 'text', 'blog']
+        with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for data in modified_blogs:
+                if data is not None:
+                    data_to_write = {key: value for key, value in data.items() if key in fieldnames}
+                    writer.writerow(data_to_write)
 
+        main()
 
-@app.route('/', methods=['GET', 'POST'])
-def hello_world():
-    if request.method == "POST":
-        title = request.form['title']
-        desc = request.form['desc']
-        demo = Demo(title=title, desc=desc, date_created=datetime.now())
-        db.session.add(demo)
-        db.session.commit()
-    all_demo = Demo.query.all()
-    return render_template('index.html', all_demo=all_demo)
-    # return 'Hello, World!'
-
-
-@app.route('/show')
-def products():
-    all_demo = Demo.query.all()
-    print(all_demo)
-    return 'this is the products'
-
-
-@app.route('/delete/<int:serial>')
-def delete(serial):
-    all_demo = Demo.query.filter_by(serial=serial).first()
-    db.session.delete(all_demo)
-    db.session.commit()
-    return redirect('/')
-
-
-@app.route('/update/<int:serial>', methods=['GET', 'POST'])
-def update(serial):
-    if request.method == 'POST':
-        title = request.form['title']
-        desc = request.form['desc']
-        todo = Demo.query.filter_by(serial=serial).first()
-        todo.title = title
-        todo.desc = desc
-        db.session.add(todo)
-        db.session.commit()
-        return redirect('/')
-
-    todo = Demo.query.filter_by(serial=serial).first()
-    return render_template('update.html', todo=todo)
+        return jsonify(news_results)
+    else:
+        return jsonify({'error': 'No news'})
 
 
 if __name__ == '__main__':
+    if not _legacy_publish_allowed():
+        raise SystemExit(
+            "Legacy Flask publisher is disabled. Content Studio uses `make dev-api` and `make dev-web`. "
+            "Set ALLOW_LEGACY_PUBLISH=1 only if you intend to run the old scrape-and-publish path."
+        )
     app.run(debug=True)
