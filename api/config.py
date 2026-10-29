@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     supabase_url: str = ""
     supabase_jwt_secret: str = ""
+    supabase_anon_key: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -37,6 +38,10 @@ class Settings(BaseSettings):
     @property
     def jwt_jwks_configured(self) -> bool:
         return bool(self.supabase_url)
+
+    @property
+    def studio_context_configured(self) -> bool:
+        return bool(self.supabase_url and self.supabase_anon_key)
 
 
 @lru_cache

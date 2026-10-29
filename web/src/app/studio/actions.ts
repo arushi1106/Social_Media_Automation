@@ -2,17 +2,28 @@
 
 import { revalidatePath } from "next/cache";
 import { apiBaseUrl } from "@/lib/env";
-import { brandFromRow, saveErrorMessage } from "@/lib/brand";
+import { brandFromRow, isPlatform, saveErrorMessage } from "@/lib/brand";
 import { getCurrentUserAndBrand } from "@/lib/brands-query";
 import {
   brandToApi,
+  contentFromRow,
+  emptyCreateForm,
+  hydrateCreateForm,
   isOwnedBy,
   toDraftWritePayload,
   validateCreateForm,
+  withTrustedPillarSnapshot,
   type CreateFormState,
   type DraftRow,
   type GeneratedContent,
 } from "@/lib/content";
+import { duplicateDraftTitle } from "@/lib/library";
+import { loadOwnedPillar } from "@/app/studio/brand/pillars-actions";
+import {
+  MISSING_PILLAR_MESSAGE,
+  toApiPillar,
+  type TrustedPillarContext,
+} from "@/lib/pillars";
 import { bearerAuthorization } from "@/lib/api-auth";
 import {
   parseGeneratedIdea,
@@ -28,6 +39,7 @@ import {
   validateRepurposeTarget,
   type RefineAction,
 } from "@/lib/refine";
+import { isVariationAngle, parseHookOptions, type HookOption, type VariationAngle } from "@/lib/variations";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type GenerateResult =
@@ -41,6 +53,8 @@ export type DraftResult =
 export type VariationsResult =
   | { ok: true; alternatives: GeneratedContent[] }
   | { ok: false; message: string };
+
+export type HooksResult = { ok: true; hooks: HookOption[] } | { ok: false; message: string };
 
 export type DiscoverResult =
   | { ok: true; ideas: GeneratedIdea[]; disclaimer: string }
@@ -87,6 +101,10 @@ export async function generateStudioDraft(form: CreateFormState): Promise<Genera
   if (Object.keys(fieldErrors).length > 0) {
     return { ok: false, message: "Please fix the highlighted fields.", fieldErrors };
   }
+  const pillarResult = await trustedPillarForGenerate(form.pillarId);
+  if (!pillarResult.ok) {
+    return pillarResult;
+  }
   if (!ctx.accessToken) {
     return { ok: false, message: "Your session expired. Sign in again." };
   }
@@ -107,7 +125,8 @@ export async function generateStudioDraft(form: CreateFormState): Promise<Genera
         call_to_action: form.callToAction,
         keywords: form.keywords,
         extra_instructions: form.extraInstructions,
-        brand: brandToApi(brand),
+        brand: brandToApi(brand, ctx.brand.id),
+        pillar: toApiPillar(pillarResult.pillar),
       }),
     });
   } catch {
@@ -186,6 +205,56 @@ export async function reviewStudioDraft(content: GeneratedContent): Promise<Revi
   return { ok: true, review: parsed };
 }
 
+async function trustedPillarForGenerate(
+  pillarId: string,
+): Promise<
+  | { ok: true; pillar: TrustedPillarContext | null }
+  | { ok: false; message: string; fieldErrors: { pillarId: string } }
+> {
+  const id = pillarId.trim();
+  if (!id) {
+    return { ok: true, pillar: null };
+  }
+  const row = await loadOwnedPillar(id);
+  if (!row) {
+    return {
+      ok: false,
+      message: MISSING_PILLAR_MESSAGE,
+      fieldErrors: { pillarId: "That pillar is no longer available." },
+    };
+  }
+  return {
+    ok: true,
+    pillar: { id: row.id, name: row.name, description: row.description },
+  };
+}
+
+async function pillarPayloadForRewrite(inputs?: CreateFormState) {
+  const id = inputs?.pillarId?.trim() ?? "";
+  if (!id) return null;
+  const live = await loadOwnedPillar(id);
+  if (live) {
+    return toApiPillar({ id: live.id, name: live.name, description: live.description });
+  }
+  return null;
+}
+
+async function persistableInputs(inputs: CreateFormState): Promise<CreateFormState> {
+  const id = inputs.pillarId.trim();
+  if (!id) {
+    return withTrustedPillarSnapshot(inputs, null);
+  }
+  const live = await loadOwnedPillar(id);
+  if (live) {
+    return withTrustedPillarSnapshot(inputs, {
+      id: live.id,
+      name: live.name,
+      description: live.description,
+    });
+  }
+  return withTrustedPillarSnapshot(inputs, null);
+}
+
 async function postStudioContent(
   path: string,
   body: unknown,
@@ -209,7 +278,10 @@ async function postStudioContent(
         ...bearerAuthorization(ctx.accessToken),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...((body as object) ?? {}), brand: brandToApi(brandFromRow(ctx.brand)) }),
+      body: JSON.stringify({
+        ...((body as object) ?? {}),
+        brand: brandToApi(brandFromRow(ctx.brand), ctx.brand.id),
+      }),
     });
   } catch {
     return {
@@ -243,6 +315,7 @@ export async function refineStudioDraft(
   content: GeneratedContent,
   action: RefineAction | string,
   customInstructions: string,
+  inputs?: CreateFormState,
 ): Promise<GenerateResult> {
   const fieldErrors = validateRefineAction(action, customInstructions);
   if (Object.keys(fieldErrors).length > 0) {
@@ -257,6 +330,7 @@ export async function refineStudioDraft(
     source: sourceDraftPayload(content),
     action,
     custom_instructions: customInstructions.trim(),
+    pillar: await pillarPayloadForRewrite(inputs),
   });
   if (!result.ok) return result;
   const parsed = asGeneratedContent(result.payload);
@@ -269,15 +343,23 @@ export async function refineStudioDraft(
 export async function generateStudioVariations(
   content: GeneratedContent,
   customInstructions: string,
+  inputs?: CreateFormState,
+  angle: VariationAngle | string = "distinct",
 ): Promise<VariationsResult> {
   if (customInstructions.trim().length > 2000) {
     return { ok: false, message: "Keep custom instructions under 2000 characters." };
+  }
+  if (!isVariationAngle(angle)) {
+    return { ok: false, message: "Choose a supported variation angle." };
   }
   const result = await postStudioContent("/v1/content/variations", {
     platform: content.platform,
     format: content.format,
     source: sourceDraftPayload(content),
     custom_instructions: customInstructions.trim(),
+    pillar: await pillarPayloadForRewrite(inputs),
+    angle,
+    topic: inputs?.topic?.trim() ?? "",
   });
   if (!result.ok) return result;
   const payload = result.payload as { alternatives?: unknown[] };
@@ -290,11 +372,36 @@ export async function generateStudioVariations(
   return { ok: true, alternatives };
 }
 
+export async function generateStudioHooks(
+  content: GeneratedContent,
+  customInstructions: string,
+  inputs?: CreateFormState,
+): Promise<HooksResult> {
+  if (customInstructions.trim().length > 2000) {
+    return { ok: false, message: "Keep custom instructions under 2000 characters." };
+  }
+  const result = await postStudioContent("/v1/content/hooks", {
+    platform: content.platform,
+    format: content.format,
+    source: sourceDraftPayload(content),
+    custom_instructions: customInstructions.trim(),
+    pillar: await pillarPayloadForRewrite(inputs),
+    topic: inputs?.topic?.trim() ?? "",
+  });
+  if (!result.ok) return result;
+  const hooks = parseHookOptions(result.payload);
+  if (hooks.length !== 4) {
+    return { ok: false, message: "The writing service did not return four usable hooks. Try again." };
+  }
+  return { ok: true, hooks };
+}
+
 export async function repurposeStudioDraft(
   content: GeneratedContent,
   targetPlatform: string,
   targetFormat: string,
   customInstructions: string,
+  inputs?: CreateFormState,
 ): Promise<GenerateResult> {
   const fieldErrors = validateRepurposeTarget(content, targetPlatform, targetFormat);
   if (Object.keys(fieldErrors).length > 0) {
@@ -310,6 +417,7 @@ export async function repurposeStudioDraft(
     target_format: targetFormat,
     source: sourceDraftPayload(content),
     custom_instructions: customInstructions.trim(),
+    pillar: await pillarPayloadForRewrite(inputs),
   });
   if (!result.ok) return result;
   const parsed = asGeneratedContent(result.payload);
@@ -328,7 +436,12 @@ export async function saveStudioDraft(
     return { ok: false, message: ctx.error };
   }
 
-  const payload = toDraftWritePayload(content, inputs, ctx.user.id, ctx.brand?.id ?? null);
+  const payload = toDraftWritePayload(
+    content,
+    await persistableInputs(inputs),
+    ctx.user.id,
+    ctx.brand?.id ?? null,
+  );
   const { data, error } = await ctx.supabase
     .from("content_items")
     .insert(payload)
@@ -339,6 +452,7 @@ export async function saveStudioDraft(
   }
   revalidatePath("/studio/drafts");
   revalidatePath(`/studio/drafts/${data.id}`);
+  revalidatePath("/studio/strategy");
   return { ok: true, id: data.id };
 }
 
@@ -362,7 +476,12 @@ export async function updateStudioDraft(
   if (!existing || !isOwnedBy(existing, ctx.user.id)) {
     return { ok: false, message: "Draft not found." };
   }
-  const payload = toDraftWritePayload(content, inputs, ctx.user.id, ctx.brand?.id ?? null);
+  const payload = toDraftWritePayload(
+    content,
+    await persistableInputs(inputs),
+    ctx.user.id,
+    ctx.brand?.id ?? null,
+  );
   const { error } = await ctx.supabase
     .from("content_items")
     .update({
@@ -380,6 +499,7 @@ export async function updateStudioDraft(
   }
   revalidatePath("/studio/drafts");
   revalidatePath(`/studio/drafts/${draftId}`);
+  revalidatePath("/studio/strategy");
   return { ok: true, id: draftId };
 }
 
@@ -419,4 +539,65 @@ export async function listOwnedDrafts(): Promise<{ drafts: DraftRow[]; error: st
   }
   const rows = (data ?? []) as DraftRow[];
   return { drafts: rows.filter((row) => isOwnedBy(row, ctx.user.id)), error: null };
+}
+
+export async function duplicateStudioDraft(draftId: string): Promise<DraftResult> {
+  const ctx = await sessionContext();
+  if (!ctx.ok) {
+    return { ok: false, message: ctx.error };
+  }
+  const source = await loadOwnedDraft(draftId);
+  if (!source || !isOwnedBy(source, ctx.user.id)) {
+    return { ok: false, message: "Draft not found." };
+  }
+  const content = contentFromRow(source);
+  if (!content) {
+    return { ok: false, message: "That draft has no copy to duplicate." };
+  }
+  const fallback = emptyCreateForm(
+    isPlatform(source.platform) ? [source.platform] : ["linkedin"],
+  );
+  const stored = (source.metadata?.inputs ?? null) as Partial<CreateFormState> | null;
+  const inputs = hydrateCreateForm(stored, fallback);
+  const copy = {
+    ...content,
+    title: duplicateDraftTitle(content.title),
+    status: "draft",
+  };
+  const payload = toDraftWritePayload(
+    copy,
+    await persistableInputs(inputs),
+    ctx.user.id,
+    ctx.brand?.id ?? null,
+  );
+  const { data, error } = await ctx.supabase.from("content_items").insert(payload).select("id").single();
+  if (error || !data) {
+    return { ok: false, message: saveErrorMessage(error) };
+  }
+  revalidatePath("/studio/drafts");
+  revalidatePath(`/studio/drafts/${data.id}`);
+  revalidatePath("/studio/strategy");
+  return { ok: true, id: data.id };
+}
+
+export async function deleteStudioDraft(draftId: string): Promise<DraftResult> {
+  const ctx = await sessionContext();
+  if (!ctx.ok) {
+    return { ok: false, message: ctx.error };
+  }
+  const existing = await loadOwnedDraft(draftId);
+  if (!existing || !isOwnedBy(existing, ctx.user.id)) {
+    return { ok: false, message: "Draft not found." };
+  }
+  const { error } = await ctx.supabase
+    .from("content_items")
+    .delete()
+    .eq("id", draftId)
+    .eq("user_id", ctx.user.id);
+  if (error) {
+    return { ok: false, message: saveErrorMessage(error) };
+  }
+  revalidatePath("/studio/drafts");
+  revalidatePath("/studio/strategy");
+  return { ok: true, id: draftId };
 }

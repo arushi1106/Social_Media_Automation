@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { emptyBrandDraft, type BrandDraft } from "@/lib/brand";
 import {
+  brandToApi,
   contentEquals,
+  emptyCreateForm,
   flattenGeneratedText,
+  hydrateCreateForm,
   isOwnedBy,
+  resolveCreatePlatform,
   toDraftWritePayload,
   validateCreateForm,
+  withTrustedPillarSnapshot,
   type CreateFormState,
   type GeneratedContent,
 } from "./content";
@@ -19,6 +24,9 @@ function form(overrides: Partial<CreateFormState> = {}): CreateFormState {
     callToAction: "",
     keywords: "",
     extraInstructions: "",
+    pillarId: "",
+    pillarName: "",
+    pillarDescription: "",
     ...overrides,
   };
 }
@@ -55,6 +63,10 @@ describe("validateCreateForm", () => {
   it("accepts a valid LinkedIn text post", () => {
     expect(validateCreateForm(form(), ["linkedin"])).toEqual({});
   });
+
+  it("does not require a content pillar", () => {
+    expect(validateCreateForm(form({ pillarId: "" }), ["linkedin"])).toEqual({});
+  });
 });
 
 describe("draft persistence mapping", () => {
@@ -69,6 +81,33 @@ describe("draft persistence mapping", () => {
     expect(isOwnedBy({ user_id: "a" }, "a")).toBe(true);
     expect(isOwnedBy({ user_id: "a" }, "b")).toBe(false);
     expect(isOwnedBy({ user_id: "a" }, "")).toBe(false);
+  });
+
+  it("stores the selected pillar snapshot on the draft metadata inputs", () => {
+    const inputs = withTrustedPillarSnapshot(form({ pillarId: "p1" }), {
+      id: "p1",
+      name: "Education",
+      description: "Practical explainers.",
+    });
+    const payload = toDraftWritePayload(sample, inputs, "session-user", "brand-1");
+    expect(payload.metadata.inputs.pillarId).toBe("p1");
+    expect(payload.metadata.inputs.pillarName).toBe("Education");
+    expect(payload.metadata.inputs.keywords).toBe("");
+  });
+
+  it("sends only the owned brand id to the writing API", () => {
+    const payload = brandToApi({ ...emptyBrandDraft(), name: "Forged Inc" }, "brand-1");
+    expect(payload).toEqual({ id: "brand-1" });
+  });
+
+  it("hydrates older drafts that have no pillar fields without inventing a pillar", () => {
+    const hydrated = hydrateCreateForm(
+      { platform: "linkedin", format: "text_post", topic: "Old draft" },
+      form(),
+    );
+    expect(hydrated.topic).toBe("Old draft");
+    expect(hydrated.pillarId).toBe("");
+    expect(hydrated.pillarName).toBe("");
   });
 });
 
@@ -97,6 +136,16 @@ describe("contentEquals", () => {
   it("treats trimmed copies as equal and edits as dirty", () => {
     expect(contentEquals(sample, { ...sample, body: "  A long enough post body.  " })).toBe(true);
     expect(contentEquals(sample, { ...sample, body: "Changed" })).toBe(false);
+  });
+});
+
+describe("create form defaults", () => {
+  it("uses a preferred platform only when it is on the brand, and never invents a pillar", () => {
+    expect(resolveCreatePlatform(["linkedin", "instagram"], "instagram")).toBe("instagram");
+    expect(resolveCreatePlatform(["linkedin"], "instagram")).toBe("linkedin");
+    const form = emptyCreateForm(["linkedin", "instagram"], "instagram");
+    expect(form.platform).toBe("instagram");
+    expect(form.pillarId).toBe("");
   });
 });
 

@@ -9,6 +9,7 @@ from api.config import Settings, get_settings
 from api.services.review import review_studio_draft
 from api.services.generation import (
     BrandContext,
+    PillarContext,
     GenerationError,
     MAX_CUSTOM,
     MAX_SOURCE_BODY,
@@ -17,10 +18,12 @@ from api.services.generation import (
     MAX_THEME,
     GeneratedContent,
     generate_content_ideas,
+    generate_hooks,
     generate_refinement,
     generate_repurpose,
     generate_studio_draft,
     generate_variations,
+    assert_variation_angle,
     assert_discovery_count,
     assert_discovery_objective,
     assert_repurpose_target,
@@ -28,6 +31,8 @@ from api.services.generation import (
     allowed_idea_platforms,
     validate_source_draft,
 )
+from api.errors import public_error_detail
+from api.services.studio_context import StudioContextError, resolve_studio_context
 from api.services.throttle import generation_throttle
 
 router = APIRouter(prefix="/v1/content", tags=["content"])
@@ -42,6 +47,7 @@ class GenerateRequest(BaseModel):
     keywords: str = Field(default="", max_length=300)
     extra_instructions: str = Field(default="", max_length=4000)
     brand: Optional[BrandContext] = None
+    pillar: Optional[PillarContext] = None
 
     model_config = {"populate_by_name": True}
 
@@ -58,6 +64,7 @@ class RefineRequest(BaseModel):
     action: str
     custom_instructions: str = Field(default="", max_length=MAX_CUSTOM)
     brand: Optional[BrandContext] = None
+    pillar: Optional[PillarContext] = None
 
     model_config = {"populate_by_name": True}
 
@@ -68,6 +75,21 @@ class VariationsRequest(BaseModel):
     source: SourceDraft
     custom_instructions: str = Field(default="", max_length=MAX_CUSTOM)
     brand: Optional[BrandContext] = None
+    pillar: Optional[PillarContext] = None
+    angle: str = Field(default="", max_length=40)
+    topic: str = Field(default="", max_length=400)
+
+    model_config = {"populate_by_name": True}
+
+
+class HooksRequest(BaseModel):
+    platform: str
+    content_format: str = Field(..., alias="format")
+    source: SourceDraft
+    custom_instructions: str = Field(default="", max_length=MAX_CUSTOM)
+    brand: Optional[BrandContext] = None
+    pillar: Optional[PillarContext] = None
+    topic: str = Field(default="", max_length=400)
 
     model_config = {"populate_by_name": True}
 
@@ -80,6 +102,7 @@ class RepurposeRequest(BaseModel):
     source: SourceDraft
     custom_instructions: str = Field(default="", max_length=MAX_CUSTOM)
     brand: Optional[BrandContext] = None
+    pillar: Optional[PillarContext] = None
 
 
 class GenerateResponse(BaseModel):
@@ -92,10 +115,22 @@ class GenerateResponse(BaseModel):
     script: Optional[dict[str, str]]
     status: str
     model: str
+    angle: str = ""
 
 
 class VariationsResponse(BaseModel):
     alternatives: list[GenerateResponse]
+
+
+class HookResponse(BaseModel):
+    text: str
+    angle: str = ""
+
+
+class HooksResponse(BaseModel):
+    hooks: list[HookResponse]
+    status: str
+    model: str
 
 
 class IdeasRequest(BaseModel):
@@ -170,7 +205,26 @@ def _to_response(result: dict[str, Any]) -> GenerateResponse:
         script=result.get("script"),
         status=result["status"],
         model=result["model"],
+        angle=result.get("angle") or "",
     )
+
+
+def _trusted_context(
+    user: CurrentUser,
+    settings: Settings,
+    brand: Optional[BrandContext],
+    pillar: Optional[PillarContext] = None,
+) -> tuple[Optional[BrandContext], Optional[PillarContext]]:
+    try:
+        return resolve_studio_context(
+            user_id=user.id,
+            access_token=user.token,
+            settings=settings,
+            brand=brand,
+            pillar=pillar,
+        )
+    except StudioContextError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
 
 
 def _require_openai(user: CurrentUser, settings: Settings) -> None:
@@ -210,11 +264,14 @@ def _run_model(producer: Callable[[], Any]) -> Any:
             detail="Draft generation failed. Check OPENAI_API_KEY and model access on the server.",
         ) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=public_error_detail(exc, "That request could not be processed."),
+        ) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Draft generation failed. Try again.",
+            detail=public_error_detail(exc, "Draft generation failed. Try again."),
         ) from exc
 
 
@@ -229,6 +286,7 @@ def generate(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
+    brand, pillar = _trusted_context(user, settings, payload.brand, payload.pillar)
     _require_openai(user, settings)
     result = _run_model(
         lambda: generate_studio_draft(
@@ -241,7 +299,8 @@ def generate(
             call_to_action=payload.call_to_action,
             keywords=payload.keywords,
             extra_instructions=payload.extra_instructions,
-            brand=payload.brand,
+            brand=brand,
+            pillar=pillar,
         )
     )
     return _to_response(result)
@@ -259,6 +318,7 @@ def refine(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
+    brand, pillar = _trusted_context(user, settings, payload.brand, payload.pillar)
     _require_openai(user, settings)
     result = _run_model(
         lambda: generate_refinement(
@@ -269,7 +329,8 @@ def refine(
             source=payload.source.model_dump(),
             action=payload.action,
             custom_instructions=payload.custom_instructions,
-            brand=payload.brand,
+            brand=brand,
+            pillar=pillar,
         )
     )
     return _to_response(result)
@@ -283,10 +344,12 @@ def variations(
 ) -> VariationsResponse:
     try:
         assert_supported(payload.platform, payload.content_format)
+        assert_variation_angle(payload.angle)
         validate_source_draft(payload.source.model_dump(), payload.content_format)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
+    brand, pillar = _trusted_context(user, settings, payload.brand, payload.pillar)
     _require_openai(user, settings)
     results = _run_model(
         lambda: generate_variations(
@@ -296,10 +359,47 @@ def variations(
             content_format=payload.content_format,
             source=payload.source.model_dump(),
             custom_instructions=payload.custom_instructions,
-            brand=payload.brand,
+            brand=brand,
+            pillar=pillar,
+            angle=payload.angle,
+            topic=payload.topic,
         )
     )
     return VariationsResponse(alternatives=[_to_response(item) for item in results])
+
+
+@router.post("/hooks", response_model=HooksResponse)
+def hooks(
+    payload: HooksRequest,
+    user: CurrentUser = Depends(require_user),
+    settings: Settings = Depends(get_settings),
+) -> HooksResponse:
+    try:
+        assert_supported(payload.platform, payload.content_format)
+        validate_source_draft(payload.source.model_dump(), payload.content_format)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+    brand, pillar = _trusted_context(user, settings, payload.brand, payload.pillar)
+    _require_openai(user, settings)
+    result = _run_model(
+        lambda: generate_hooks(
+            api_key=settings.openai_api_key,
+            model=settings.openai_model,
+            platform=payload.platform,
+            content_format=payload.content_format,
+            source=payload.source.model_dump(),
+            custom_instructions=payload.custom_instructions,
+            brand=brand,
+            pillar=pillar,
+            topic=payload.topic,
+        )
+    )
+    return HooksResponse(
+        hooks=[HookResponse(text=item["text"], angle=item.get("angle") or "") for item in result["hooks"]],
+        status=result["status"],
+        model=result["model"],
+    )
 
 
 @router.post("/repurpose", response_model=GenerateResponse)
@@ -319,6 +419,7 @@ def repurpose(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
+    brand, pillar = _trusted_context(user, settings, payload.brand, payload.pillar)
     _require_openai(user, settings)
     result = _run_model(
         lambda: generate_repurpose(
@@ -330,7 +431,8 @@ def repurpose(
             target_format=payload.target_format,
             source=payload.source.model_dump(),
             custom_instructions=payload.custom_instructions,
-            brand=payload.brand,
+            brand=brand,
+            pillar=pillar,
         )
     )
     return _to_response(result)
@@ -345,7 +447,14 @@ def ideas(
     try:
         assert_discovery_count(payload.count)
         assert_discovery_objective(payload.objective)
-        allowed_idea_platforms(payload.brand, payload.platform)
+        if payload.platform:
+            allowed_idea_platforms(None, payload.platform)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+    brand, _pillar = _trusted_context(user, settings, payload.brand, None)
+    try:
+        allowed_idea_platforms(brand, payload.platform)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
@@ -358,7 +467,7 @@ def ideas(
             theme=payload.theme,
             platform=payload.platform,
             objective=payload.objective,
-            brand=payload.brand,
+            brand=brand,
         )
     )
     return IdeasResponse(
@@ -379,6 +488,7 @@ def review(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
+    brand, _pillar = _trusted_context(user, settings, payload.brand, None)
     _require_openai(user, settings)
     result = _run_model(
         lambda: review_studio_draft(
@@ -387,7 +497,7 @@ def review(
             platform=payload.platform,
             content_format=payload.content_format,
             source=payload.source.model_dump(),
-            brand=payload.brand,
+            brand=brand,
         )
     )
     return ReviewResponse.model_validate(result)

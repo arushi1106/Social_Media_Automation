@@ -6,15 +6,21 @@ import pytest
 
 from api.services.generation import (
     BrandContext,
+    PillarContext,
     GenerationError,
+    VARIATION_ANGLES,
     assert_refine_action,
     assert_repurpose_target,
+    assert_variation_angle,
+    build_hooks_messages,
     build_refine_messages,
     build_repurpose_messages,
     build_variations_messages,
+    generate_hooks,
     generate_refinement,
     generate_repurpose,
     generate_variations,
+    validate_hooks,
     validate_source_draft,
     validate_three_alternatives,
 )
@@ -65,6 +71,23 @@ def test_refine_messages_include_source_and_brand():
     assert "golden set" in blob
     assert "Northstar" in blob
     assert "conversational" in blob
+    assert "Selected content pillar" not in blob
+
+
+def test_refine_messages_keep_saved_pillar_when_present():
+    source = validate_source_draft(SOURCE, "text_post")
+    messages = build_refine_messages(
+        platform="linkedin",
+        content_format="text_post",
+        source=source,
+        action="shorten",
+        brand=BrandContext(name="Northstar"),
+        pillar=PillarContext(id="p1", name="Education", description="Explainers."),
+    )
+    blob = messages[1]["content"]
+    assert "Education" in blob
+    assert "Northstar" in blob
+    assert "golden set" in blob
 
 
 def test_empty_source_rejected():
@@ -149,6 +172,102 @@ def test_generate_variations_success():
         source=validate_source_draft(SOURCE, "text_post"),
     )
     assert "exactly three" in messages[0]["content"].lower()
+
+
+def test_variation_angles_are_allowlisted():
+    assert set(VARIATION_ANGLES) == {"educational", "storytelling", "opinion", "practical", "question"}
+    assert assert_variation_angle("") == ""
+    assert assert_variation_angle("mixed") == "mixed"
+    with pytest.raises(ValueError, match="Unsupported variation angle"):
+        assert_variation_angle("viral")
+    source = validate_source_draft(SOURCE, "text_post")
+    brand = BrandContext(name="Northstar", audience="Consultants", tone="direct")
+    pillar = PillarContext(id="p1", name="Education", description="Explainers.")
+    for angle in VARIATION_ANGLES:
+        blob = "\n".join(
+            part["content"]
+            for part in build_variations_messages(
+                platform="linkedin",
+                content_format="text_post",
+                source=source,
+                brand=brand,
+                pillar=pillar,
+                angle=angle,
+                topic="Why evals matter",
+            )
+        )
+        assert "Northstar" in blob
+        assert "Consultants" in blob
+        assert "Education" in blob
+        assert "Why evals matter" in blob
+        assert angle in blob
+        assert "linkedin" in blob.lower()
+        assert "do not invent" in blob.lower() or "Do not invent" in blob
+    mixed = build_variations_messages(
+        platform="linkedin",
+        content_format="text_post",
+        source=source,
+        angle="mixed",
+    )[1]["content"]
+    assert "educational" in mixed
+    assert "storytelling" in mixed
+    assert "practical" in mixed
+
+
+def test_hooks_return_openings_not_full_drafts():
+    with pytest.raises(GenerationError, match="exactly 4"):
+        validate_hooks({"hooks": ["one"]})
+    with pytest.raises(GenerationError, match="empty"):
+        validate_hooks({"hooks": ["a", "b", "c", ""]})
+    with pytest.raises(GenerationError, match="too similar"):
+        validate_hooks({"hooks": ["Same hook", "Same hook", "Third", "Fourth"]})
+    valid = validate_hooks(
+        {
+            "hooks": [
+                {"text": "Stop shipping without evals.", "angle": "opinion"},
+                {"text": "What is your golden set?", "angle": "question"},
+                {"text": "Three steps to a golden set.", "angle": "practical"},
+                {"text": "Evals are the missing chapter.", "angle": "educational"},
+            ]
+        }
+    )
+    assert len(valid) == 4
+    assert valid[0]["angle"] == "opinion"
+    payload = {
+        "hooks": [
+            {"text": "Hook one for evals", "angle": "question"},
+            {"text": "Hook two for evals", "angle": "practical"},
+            {"text": "Hook three for evals", "angle": "opinion"},
+            {"text": "Hook four for evals", "angle": "educational"},
+        ]
+    }
+    create = _completion(payload)
+    result = generate_hooks(
+        api_key="sk-test",
+        model="gpt-4o-mini",
+        platform="linkedin",
+        content_format="text_post",
+        source=SOURCE,
+        brand=BrandContext(name="Northstar", audience="Consultants"),
+        pillar=PillarContext(id="p1", name="Education", description="Explainers."),
+        topic="Why evals matter",
+        openai_create=create,
+    )
+    assert result["status"] == "draft"
+    assert "body" not in result
+    assert len(result["hooks"]) == 4
+    messages = build_hooks_messages(
+        platform="linkedin",
+        content_format="text_post",
+        source=validate_source_draft(SOURCE, "text_post"),
+        brand=BrandContext(name="Northstar"),
+        topic="Why evals matter",
+    )
+    blob = messages[0]["content"] + messages[1]["content"]
+    assert "hooks only" in blob.lower() or "not a rewritten" in blob.lower()
+    assert "Why evals matter" in blob
+    assert "Northstar" in blob
+    assert "Eval debt" in blob
 
 
 def test_repurpose_rejects_same_target():

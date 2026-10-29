@@ -1,11 +1,74 @@
 "use client";
 
-import { DIMENSION_LABELS, DIMENSION_WEIGHTS, lowestApplicableImprovements, type QualityReview } from "@/lib/quality";
+import {
+  DIMENSION_LABELS,
+  DIMENSION_WEIGHTS,
+  REVIEW_ACTION_LABEL,
+  REVIEW_SECTION_TITLE,
+  lowestApplicableImprovements,
+  type QualityReview,
+} from "@/lib/quality";
 import { REFINE_ACTION_LABELS, type RefineAction } from "@/lib/refine";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export function QualityReviewPanel({
+export function QualityReviewSection({
+  review,
+  pending,
+  hasUnsavedEdits,
+  comparingAlternatives = false,
+  error,
+  onReview,
+  onImprove,
+  disabled,
+}: {
+  review: QualityReview | null;
+  pending: boolean;
+  hasUnsavedEdits: boolean;
+  comparingAlternatives?: boolean;
+  error: string | null;
+  onReview: () => void;
+  onImprove: (action: RefineAction) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Card>
+      <h2 className="font-serif text-2xl">{REVIEW_SECTION_TITLE}</h2>
+      <p className="mt-1 text-sm leading-6 text-ink/65">
+        Advisory review of the last saved draft against your brand, platform, and format. This is not a
+        forecast of engagement or reach, and it does not publish anything.
+      </p>
+      {hasUnsavedEdits ? (
+        <p className="mt-2 text-sm text-ink/70">
+          You have unsaved edits. This review uses the last saved version until you save.
+        </p>
+      ) : null}
+      {comparingAlternatives ? (
+        <p className="mt-2 text-sm text-ink/70">
+          Any score below is for the last saved draft, not the alternatives or hooks shown in Refine.
+        </p>
+      ) : null}
+      <div className="mt-4">
+        <Button type="button" onClick={onReview} disabled={disabled}>
+          {pending ? "Reviewing…" : REVIEW_ACTION_LABEL}
+        </Button>
+      </div>
+      {pending ? (
+        <p className="mt-3 text-sm text-ink/60" role="status">
+          Reviewing the saved draft…
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-3 text-sm text-accent" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {review ? <QualityReviewResults review={review} onImprove={onImprove} disabled={disabled} /> : null}
+    </Card>
+  );
+}
+
+function QualityReviewResults({
   review,
   onImprove,
   disabled,
@@ -17,9 +80,8 @@ export function QualityReviewPanel({
   const suggested = lowestApplicableImprovements(review);
 
   return (
-    <Card>
-      <p className="text-xs uppercase tracking-[0.14em] text-ink/50">Quality review</p>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+    <div className="mt-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-serif text-4xl">{review.overall_score}</p>
           <p className="text-sm text-ink/60">out of 100 · advisory score</p>
@@ -29,7 +91,8 @@ export function QualityReviewPanel({
       <p className="mt-3 text-xs leading-5 text-ink/55">{review.disclaimer}</p>
       {review.limited_context.length ? (
         <p className="mt-2 text-xs text-ink/55">
-          Limited brand context: {review.limited_context.join(", ")}. Those dimensions were not scored as failures.
+          Limited brand context: {review.limited_context.join(", ")}. Those dimensions were not scored as
+          failures.
         </p>
       ) : null}
 
@@ -39,7 +102,9 @@ export function QualityReviewPanel({
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="font-medium">{DIMENSION_LABELS[dimension.key]}</h3>
               <p className="text-sm text-ink/60">
-                {dimension.applicable ? `${dimension.score}/100 · weight ${DIMENSION_WEIGHTS[dimension.key]}` : "Not assessed"}
+                {dimension.applicable
+                  ? `${dimension.score}/100 · weight ${DIMENSION_WEIGHTS[dimension.key]}`
+                  : "Not assessed"}
               </p>
             </div>
             <p className="mt-2 text-sm leading-6 text-ink/80">{dimension.explanation}</p>
@@ -92,7 +157,8 @@ export function QualityReviewPanel({
       <div className="mt-6">
         <h3 className="text-xs uppercase tracking-[0.14em] text-ink/50">Improve with existing refinements</h3>
         <p className="mt-1 text-sm text-ink/65">
-          These actions run the current rewrite tools. They do not publish and they do not replace this review.
+          These actions run the current rewrite tools. They do not publish and they do not replace this
+          review.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {suggested.length ? (
@@ -124,6 +190,6 @@ export function QualityReviewPanel({
         </div>
       </div>
       <p className="mt-4 text-xs leading-5 text-ink/50">{review.scoring_notes}</p>
-    </Card>
+    </div>
   );
 }

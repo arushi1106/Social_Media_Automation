@@ -86,7 +86,16 @@ export function BrandWizard({
   const topicsPreview = useMemo(() => parseTopics(draft.topicsText), [draft.topicsText]);
 
   function update<K extends keyof BrandDraft>(key: K, value: BrandDraft[K]) {
-    setDraft((current) => ({ ...current, [key]: value }));
+    setDraft((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "platforms") {
+        const platforms = value as BrandDraft["platforms"];
+        if (next.preferredPlatform && !platforms.includes(next.preferredPlatform)) {
+          next.preferredPlatform = "";
+        }
+      }
+      return next;
+    });
     setErrors((current) => {
       const next = { ...current };
       delete next[key];
@@ -171,7 +180,7 @@ export function BrandWizard({
           </p>
           <h1 className="mt-3 font-serif text-4xl">Set the voice once. Write faster later.</h1>
           <p className="mt-4 text-base leading-7 text-ink/75">
-            Tell us who you are, how you sound, and where you publish. We will save these
+            Tell us who you are, how you sound, and which platforms you write for. We will save these
             preferences to your account and use them when generating drafts. Nothing is posted
             to LinkedIn or Instagram.
           </p>
@@ -332,6 +341,28 @@ export function BrandWizard({
             </div>
             <FieldError id="platforms-error" message={errors.platforms} />
           </fieldset>
+          <div className="mt-6">
+            <Label htmlFor="preferred-platform">Default platform for new drafts (optional)</Label>
+            <select
+              id="preferred-platform"
+              className="mt-1 w-full rounded-xl border border-ink/15 bg-paper px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+              value={draft.preferredPlatform}
+              onChange={(event) =>
+                update("preferredPlatform", event.target.value as BrandDraft["preferredPlatform"])
+              }
+            >
+              <option value="">No default — use the first selected platform</option>
+              {draft.platforms.map((platform) => (
+                <option key={platform} value={platform}>
+                  {formatPlatform(platform)}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs leading-5 text-ink/55">
+              Ideas, planner links, and an explicit pillar choice still win over this default. It never
+              picks a content pillar.
+            </p>
+          </div>
           <fieldset className="mt-6">
             <legend className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-ink/60">
               Content goals
@@ -389,6 +420,11 @@ export function BrandWizard({
             <ReviewRow
               label="Platforms"
               value={draft.platforms.map(formatPlatform).join(", ") || "—"}
+              onEdit={() => setStep(4)}
+            />
+            <ReviewRow
+              label="Default platform"
+              value={draft.preferredPlatform ? formatPlatform(draft.preferredPlatform) : "None"}
               onEdit={() => setStep(4)}
             />
             <ReviewRow

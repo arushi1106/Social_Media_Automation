@@ -5,7 +5,13 @@ import { DraftEditor } from "@/components/draft-editor";
 import { StudioShell } from "@/components/studio-shell";
 import { loadOwnedDraft } from "@/app/studio/actions";
 import { getCurrentUserAndBrand } from "@/lib/brands-query";
-import { contentFromRow, emptyCreateForm, isOwnedBy, type CreateFormState } from "@/lib/content";
+import {
+  contentFromRow,
+  emptyCreateForm,
+  hydrateCreateForm,
+  isOwnedBy,
+  type CreateFormState,
+} from "@/lib/content";
 import { isPlatform } from "@/lib/brand";
 
 export default function DraftDetailPage({
@@ -46,11 +52,12 @@ async function DraftDetail({ params }: { params: Promise<{ id: string }> }) {
   if (!content) {
     notFound();
   }
-  const storedInputs = (row.metadata?.inputs ?? null) as CreateFormState | null;
+  const storedInputs = (row.metadata?.inputs ?? null) as Partial<CreateFormState> | null;
+  const fallback = emptyCreateForm(isPlatform(row.platform) ? [row.platform] : ["linkedin"]);
   const inputs =
-    storedInputs && isPlatform(storedInputs.platform)
-      ? storedInputs
-      : emptyCreateForm(isPlatform(row.platform) ? [row.platform] : ["linkedin"]);
+    storedInputs && isPlatform(storedInputs.platform ?? "")
+      ? hydrateCreateForm(storedInputs, fallback)
+      : fallback;
 
   return (
     <StudioShell title={row.title || row.topic || "Draft"} email={user.email}>

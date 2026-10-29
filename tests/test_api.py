@@ -44,6 +44,10 @@ def test_health_reports_no_publishing():
     assert body["publishes_to_social"] is False
     assert "openai_configured" in body
     assert "auth_configured" in body
+    assert "studio_context_configured" in body
+    blob = str(body).lower()
+    assert "sk-" not in blob
+    assert "service_role" not in blob
 
 
 def test_generate_requires_auth_configuration():
@@ -102,7 +106,6 @@ def test_generate_with_mocked_model(monkeypatch):
             json={
                 "platform": "linkedin", "format": "text_post",
                 "topic": "Shipping evals",
-                "brand": {"name": "Northstar", "tone": "direct"},
             },
         )
     assert response.status_code == 200
@@ -110,6 +113,22 @@ def test_generate_with_mocked_model(monkeypatch):
     assert body["status"] == "draft"
     assert body["format"] == "text_post"
     assert "publish" not in body
+    assert "scheduled" not in body
+
+
+def test_generate_rejects_oversized_instructions(monkeypatch):
+    _enable_auth(monkeypatch)
+    response = client.post(
+        "/v1/content/generate",
+        headers=_auth_header(),
+        json={
+            "platform": "linkedin",
+            "format": "text_post",
+            "topic": "Shipping evals",
+            "extra_instructions": "x" * 4001,
+        },
+    )
+    assert response.status_code == 422
 
 
 def test_generate_missing_topic_is_422(monkeypatch):
@@ -252,6 +271,51 @@ def test_variations_success(monkeypatch):
     assert len(response.json()["alternatives"]) == 3
 
 
+def test_variations_reject_unknown_angle(monkeypatch):
+    _enable_auth(monkeypatch)
+    response = client.post(
+        "/v1/content/variations",
+        headers=_auth_header(),
+        json={
+            "platform": "linkedin",
+            "format": "text_post",
+            "source": SOURCE_DRAFT,
+            "angle": "viral",
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_hooks_require_auth_and_succeed_when_mocked(monkeypatch):
+    _enable_auth(monkeypatch)
+    denied = client.post(
+        "/v1/content/hooks",
+        json={"platform": "linkedin", "format": "text_post", "source": SOURCE_DRAFT},
+    )
+    assert denied.status_code in (401, 503)
+    _enable_auth(monkeypatch, openai=True)
+    monkeypatch.setattr(generation_throttle, "allow", lambda user_id: True)
+    fake = {
+        "hooks": [
+            {"text": "Hook a", "angle": "question"},
+            {"text": "Hook b", "angle": "practical"},
+            {"text": "Hook c", "angle": "opinion"},
+            {"text": "Hook d", "angle": "educational"},
+        ],
+        "status": "draft",
+        "model": "gpt-4o-mini",
+    }
+    with patch("api.routers.content.generate_hooks", return_value=fake):
+        response = client.post(
+            "/v1/content/hooks",
+            headers=_auth_header(),
+            json={"platform": "linkedin", "format": "text_post", "source": SOURCE_DRAFT},
+        )
+    assert response.status_code == 200
+    assert len(response.json()["hooks"]) == 4
+    assert "publish" not in response.json()
+
+
 def test_repurpose_and_provider_errors(monkeypatch):
     from openai import APITimeoutError, RateLimitError
 
@@ -341,13 +405,13 @@ def test_ideas_rejects_invalid_count_and_platform(monkeypatch):
     too_many = client.post(
         "/v1/content/ideas",
         headers=_auth_header(),
-        json={"count": 20, "brand": {"platforms": ["linkedin"]}},
+        json={"count": 20},
     )
     assert too_many.status_code == 422
     bad_platform = client.post(
         "/v1/content/ideas",
         headers=_auth_header(),
-        json={"count": 3, "platform": "tiktok", "brand": {"platforms": ["linkedin"]}},
+        json={"count": 3, "platform": "tiktok"},
     )
     assert bad_platform.status_code == 422
 
@@ -375,7 +439,7 @@ def test_ideas_with_mocked_model(monkeypatch):
         response = client.post(
             "/v1/content/ideas",
             headers=_auth_header("user-42"),
-            json={"count": 3, "platform": "linkedin", "brand": {"name": "Northstar", "platforms": ["linkedin"]}},
+            json={"count": 3, "platform": "linkedin"},
         )
     assert response.status_code == 200
     body = response.json()
@@ -393,7 +457,7 @@ def test_ideas_provider_errors_and_throttle(monkeypatch):
         bad = client.post(
             "/v1/content/ideas",
             headers=_auth_header(),
-            json={"count": 3, "brand": {"platforms": ["linkedin"]}},
+            json={"count": 3},
         )
     assert bad.status_code == 502
 
@@ -401,7 +465,7 @@ def test_ideas_provider_errors_and_throttle(monkeypatch):
         timeout = client.post(
             "/v1/content/ideas",
             headers=_auth_header(),
-            json={"count": 3, "brand": {"platforms": ["linkedin"]}},
+            json={"count": 3},
         )
     assert timeout.status_code == 504
 
@@ -409,7 +473,7 @@ def test_ideas_provider_errors_and_throttle(monkeypatch):
     limited = client.post(
         "/v1/content/ideas",
         headers=_auth_header(),
-        json={"count": 3, "brand": {"platforms": ["linkedin"]}},
+        json={"count": 3},
     )
     assert limited.status_code == 429
 
@@ -512,3 +576,181 @@ def test_review_malformed_is_502(monkeypatch):
             json={"platform": "linkedin", "format": "text_post", "source": SOURCE_DRAFT},
         )
     assert response.status_code == 502
+
+
+BRAND_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+PILLAR_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+OTHER_BRAND_ID = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+
+def _enable_context(monkeypatch, openai: bool = True) -> None:
+    _enable_auth(monkeypatch, openai=openai)
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "anon-test")
+    get_settings.cache_clear()
+    monkeypatch.setattr(generation_throttle, "allow", lambda user_id: True)
+
+
+def _owned_brand(user_id: str = "user-42") -> dict:
+    return {
+        "id": BRAND_ID,
+        "user_id": user_id,
+        "name": "Northstar",
+        "niche": "",
+        "bio": "",
+        "audience": "Consultants",
+        "language": "English",
+        "platforms": ["linkedin"],
+        "goals": [],
+        "topics": [],
+        "voice_preferences": {"tone": "direct"},
+    }
+
+
+def _owned_pillar(user_id: str = "user-42", brand_id: str = BRAND_ID) -> dict:
+    return {
+        "id": PILLAR_ID,
+        "user_id": user_id,
+        "brand_id": brand_id,
+        "name": "Education",
+        "description": "Practical explainers.",
+    }
+
+
+GENERATE_OK = {
+    "platform": "linkedin",
+    "format": "text_post",
+    "title": "Title",
+    "body": "A sufficiently long body for a LinkedIn draft that passes validation.",
+    "hashtags": [],
+    "slides": [],
+    "script": None,
+    "status": "draft",
+    "model": "gpt-4o-mini",
+}
+
+
+def test_generate_authorized_brand_and_pillar_uses_stored_context(monkeypatch):
+    _enable_context(monkeypatch)
+    captured = {}
+
+    def fetch(table, record_id, access_token, settings, user_id):
+        if table == "brands":
+            return _owned_brand(user_id)
+        return _owned_pillar(user_id)
+
+    def fake_generate(**kwargs):
+        captured["brand"] = kwargs["brand"]
+        captured["pillar"] = kwargs["pillar"]
+        captured["topic"] = kwargs["topic"]
+        return GENERATE_OK
+
+    with patch("api.services.studio_context.fetch_owned_row", side_effect=fetch):
+        with patch("api.routers.content.generate_studio_draft", side_effect=fake_generate):
+            response = client.post(
+                "/v1/content/generate",
+                headers=_auth_header("user-42"),
+                json={
+                    "platform": "linkedin",
+                    "format": "text_post",
+                    "topic": "Shipping evals",
+                    "extra_instructions": "Keep it practical.",
+                    "brand": {"id": BRAND_ID, "name": "Forged Inc", "tone": "hype"},
+                    "pillar": {"id": PILLAR_ID, "name": "Forged pillar", "description": "No"},
+                },
+            )
+    assert response.status_code == 200
+    assert captured["brand"].name == "Northstar"
+    assert captured["brand"].tone == "direct"
+    assert captured["pillar"].name == "Education"
+    assert captured["topic"] == "Shipping evals"
+
+
+def test_generate_rejects_another_users_brand_id(monkeypatch):
+    _enable_context(monkeypatch)
+
+    def fetch(table, record_id, access_token, settings, user_id):
+        return None
+
+    with patch("api.services.studio_context.fetch_owned_row", side_effect=fetch):
+        with patch("api.routers.content.generate_studio_draft", return_value=GENERATE_OK) as generate:
+            response = client.post(
+                "/v1/content/generate",
+                headers=_auth_header("user-42"),
+                json={
+                    "platform": "linkedin",
+                    "format": "text_post",
+                    "topic": "Shipping evals",
+                    "brand": {"id": BRAND_ID, "name": "Victim brand"},
+                },
+            )
+    assert response.status_code == 404
+    assert generate.call_count == 0
+    assert "Victim" not in response.text
+    assert "sk-" not in response.text
+
+
+def test_refine_rejects_pillar_on_another_brand(monkeypatch):
+    _enable_context(monkeypatch)
+
+    def fetch(table, record_id, access_token, settings, user_id):
+        if table == "brands":
+            return _owned_brand(user_id)
+        return _owned_pillar(user_id, brand_id=OTHER_BRAND_ID)
+
+    with patch("api.services.studio_context.fetch_owned_row", side_effect=fetch):
+        response = client.post(
+            "/v1/content/refine",
+            headers=_auth_header("user-42"),
+            json={
+                "platform": "linkedin",
+                "format": "text_post",
+                "source": SOURCE_DRAFT,
+                "action": "shorten",
+                "brand": {"id": BRAND_ID},
+                "pillar": {"id": PILLAR_ID},
+            },
+        )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "That content context is not available."
+
+
+def test_generate_fails_closed_when_context_lookup_unavailable(monkeypatch):
+    _enable_auth(monkeypatch, openai=True)
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "")
+    get_settings.cache_clear()
+    monkeypatch.setattr(generation_throttle, "allow", lambda user_id: True)
+    response = client.post(
+        "/v1/content/generate",
+        headers=_auth_header("user-42"),
+        json={
+            "platform": "linkedin",
+            "format": "text_post",
+            "topic": "Shipping evals",
+            "brand": {"id": BRAND_ID, "name": "Northstar"},
+        },
+    )
+    assert response.status_code == 503
+    assert "traceback" not in response.text.lower()
+
+
+def test_hooks_without_pillar_still_succeed(monkeypatch):
+    _enable_context(monkeypatch)
+    fake = {
+        "hooks": [
+            {"text": "Hook a", "angle": "question"},
+            {"text": "Hook b", "angle": "practical"},
+            {"text": "Hook c", "angle": "opinion"},
+            {"text": "Hook d", "angle": "educational"},
+        ],
+        "status": "draft",
+        "model": "gpt-4o-mini",
+    }
+    with patch("api.routers.content.generate_hooks", return_value=fake) as generate:
+        response = client.post(
+            "/v1/content/hooks",
+            headers=_auth_header(),
+            json={"platform": "linkedin", "format": "text_post", "source": SOURCE_DRAFT},
+        )
+    assert response.status_code == 200
+    assert generate.call_count == 1

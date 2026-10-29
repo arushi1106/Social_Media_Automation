@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
+import { ContinueDraftLink } from "@/components/continue-draft-link";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StudioShell } from "@/components/studio-shell";
@@ -97,9 +98,12 @@ async function StudioSession() {
               <dd>{topics.join(", ") || "—"}</dd>
             </div>
           </dl>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-2">
             <ButtonLink href="/studio/brand" variant="ghost">
               Edit brand
+            </ButtonLink>
+            <ButtonLink href="/studio/brand#content-pillars" variant="ghost">
+              Content pillars
             </ButtonLink>
           </div>
         </Card>
@@ -115,9 +119,13 @@ async function StudioSession() {
             <ButtonLink href="/studio/planner" variant="ghost">
               Weekly planner
             </ButtonLink>
+            <ButtonLink href="/studio/strategy" variant="ghost">
+              Content strategy
+            </ButtonLink>
             <ButtonLink href="/studio/create" variant="ghost">
               New draft
             </ButtonLink>
+            <ContinueDraftLink />
             <ButtonLink href="/studio/drafts" variant="ghost">
               Saved drafts
             </ButtonLink>

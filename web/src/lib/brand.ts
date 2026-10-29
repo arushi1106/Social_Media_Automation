@@ -38,6 +38,7 @@ export type VoicePreferences = {
   customTone?: string;
   writingStyle?: string;
   avoid?: string;
+  preferredPlatform?: Platform;
 };
 
 export type BrandDraft = {
@@ -53,6 +54,7 @@ export type BrandDraft = {
   platforms: Platform[];
   goals: Goal[];
   topicsText: string;
+  preferredPlatform: Platform | "";
 };
 
 export type BrandRow = {
@@ -98,6 +100,7 @@ export function emptyBrandDraft(): BrandDraft {
     platforms: [],
     goals: [],
     topicsText: "",
+    preferredPlatform: "",
   };
 }
 
@@ -136,6 +139,8 @@ export function brandFromRow(row: BrandRow): BrandDraft {
     platforms: (row.platforms ?? []).filter(isPlatform),
     goals: (row.goals ?? []).filter(isGoal),
     topicsText: (row.topics ?? []).join("\n"),
+    preferredPlatform:
+      voice.preferredPlatform && isPlatform(voice.preferredPlatform) ? voice.preferredPlatform : "",
   };
 }
 
@@ -173,6 +178,12 @@ export function validateBrandDraft(draft: BrandDraft, step?: number): FieldError
     if (draft.goals.some((goal) => !isGoal(goal))) {
       errors.goals = "Choose from the listed content goals.";
     }
+    if (
+      draft.preferredPlatform &&
+      (!isPlatform(draft.preferredPlatform) || !draft.platforms.includes(draft.preferredPlatform))
+    ) {
+      errors.platforms = "Default platform must be one of the platforms you selected.";
+    }
   }
 
   return errors;
@@ -193,6 +204,9 @@ export function toBrandWritePayload(draft: BrandDraft, userId: string): BrandWri
   }
   if (draft.writingStyle.trim()) voice.writingStyle = draft.writingStyle.trim();
   if (draft.avoid.trim()) voice.avoid = draft.avoid.trim();
+  if (draft.preferredPlatform && isPlatform(draft.preferredPlatform) && draft.platforms.includes(draft.preferredPlatform)) {
+    voice.preferredPlatform = draft.preferredPlatform;
+  }
 
   return {
     user_id: userId,

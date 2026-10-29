@@ -231,6 +231,9 @@ export function ideaToCreateForm(idea: GeneratedIdea, allowedPlatforms: Platform
     callToAction: idea.call_to_action,
     keywords: idea.pillar,
     extraInstructions: extra,
+    pillarId: "",
+    pillarName: "",
+    pillarDescription: "",
   };
 }
 

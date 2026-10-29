@@ -7,12 +7,14 @@ import { loadOwnedIdea } from "@/app/studio/ideas/actions";
 import { loadOwnedPlanItem } from "@/app/studio/planner/actions";
 import { brandFromRow } from "@/lib/brand";
 import { getCurrentUserAndBrand } from "@/lib/brands-query";
+import { listOwnedPillars, loadOwnedPillar } from "@/app/studio/brand/pillars-actions";
+import { emptyCreateForm } from "@/lib/content";
 import { ideaToCreateForm } from "@/lib/ideas";
 
 export default function CreatePage({
   searchParams,
 }: {
-  searchParams: Promise<{ idea?: string; plan?: string }>;
+  searchParams: Promise<{ idea?: string; plan?: string; pillar?: string }>;
 }) {
   return (
     <Suspense fallback={<StudioShell title="Loading…" />}>
@@ -24,7 +26,7 @@ export default function CreatePage({
 async function CreateSession({
   searchParams,
 }: {
-  searchParams: Promise<{ idea?: string; plan?: string }>;
+  searchParams: Promise<{ idea?: string; plan?: string; pillar?: string }>;
 }) {
   await connection();
   const params = await searchParams;
@@ -47,13 +49,30 @@ async function CreateSession({
   const planItem = params.plan ? await loadOwnedPlanItem(params.plan) : null;
   const linkedPlanId =
     idea && planItem && planItem.idea_id === idea.id ? planItem.id : undefined;
-  const initialForm = idea ? ideaToCreateForm(idea, draft.platforms) : undefined;
+  const requestedPillar = params.pillar ? await loadOwnedPillar(params.pillar) : null;
+  const pillarFields = requestedPillar
+    ? {
+        pillarId: requestedPillar.id,
+        pillarName: requestedPillar.name,
+        pillarDescription: requestedPillar.description,
+      }
+    : { pillarId: "", pillarName: "", pillarDescription: "" };
+  const ideaForm = idea ? ideaToCreateForm(idea, draft.platforms) : undefined;
+  const initialForm = ideaForm
+    ? { ...ideaForm, ...pillarFields }
+    : requestedPillar
+      ? { ...emptyCreateForm(draft.platforms, draft.preferredPlatform), ...pillarFields }
+      : undefined;
+  const { pillars } = await listOwnedPillars();
+  const pillarUnavailable = Boolean(params.pillar && !requestedPillar);
 
   return (
     <StudioShell title="Create a draft" email={user.email}>
       <CreateDraftForm
         brand={draft}
+        pillars={pillars}
         initialForm={initialForm}
+        pillarUnavailable={pillarUnavailable}
         ideaId={idea?.id}
         planItemId={linkedPlanId}
       />

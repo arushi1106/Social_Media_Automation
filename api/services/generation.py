@@ -20,6 +20,8 @@ MAX_TEXT = 4000
 MAX_SOURCE_BODY = 8000
 MAX_CUSTOM = 2000
 REQUIRED_ALTERNATIVES = 3
+REQUIRED_HOOKS = 4
+MAX_HOOK = 180
 
 REFINE_ACTIONS: dict[str, str] = {
     "conversational": (
@@ -56,10 +58,36 @@ REFINE_ACTIONS: dict[str, str] = {
     ),
 }
 
+VARIATION_ANGLES: dict[str, str] = {
+    "educational": (
+        "Rewrite as an educational explainer: define the idea, why it matters, and a concrete takeaway. "
+        "Do not invent statistics, studies, or credentials."
+    ),
+    "storytelling": (
+        "Rewrite with a narrative arc (situation, tension, resolution) using only facts already in the source. "
+        "Do not invent personal experiences, named people, or first-person stories that are not in the draft."
+    ),
+    "opinion": (
+        "Rewrite with a clear point of view. Contrarian framing is allowed only using claims already in the source. "
+        "Do not invent expertise, data, or that 'everyone' believes something."
+    ),
+    "practical": (
+        "Rewrite as a practical, actionable guide with steps the reader can take. "
+        "Do not invent tools, metrics, or results."
+    ),
+    "question": (
+        "Lead with a genuine discussion question, then answer it with the same core message. "
+        "Do not invent audience quotes."
+    ),
+}
+
+MIXED_VARIATION_ANGLES = ("educational", "storytelling", "practical")
+
 OpenAICreate = Callable[..., Any]
 
 
 class BrandContext(BaseModel):
+    id: str = ""
     name: str = ""
     niche: str = ""
     bio: str = ""
@@ -72,6 +100,14 @@ class BrandContext(BaseModel):
     platforms: list[str] = Field(default_factory=list)
     goals: list[str] = Field(default_factory=list)
     topics: list[str] = Field(default_factory=list)
+
+
+class PillarContext(BaseModel):
+    """Prompt context for one saved pillar. Name/description without an id are ignored."""
+
+    id: str = ""
+    name: str = ""
+    description: str = ""
 
 
 class Slide(BaseModel):
@@ -178,6 +214,35 @@ def build_brand_block(brand: BrandContext) -> str:
     return "\n".join(lines) if lines else "Brand details were not provided. Write clearly and specifically."
 
 
+def trusted_pillar(pillar: Optional[PillarContext]) -> Optional[PillarContext]:
+    if pillar is None:
+        return None
+    pillar_id = _clip(pillar.id, 80)
+    name = _clip(pillar.name, 80)
+    if not pillar_id or not name:
+        return None
+    return PillarContext(id=pillar_id, name=name, description=_clip(pillar.description, 400))
+
+
+def build_pillar_block(pillar: Optional[PillarContext]) -> str:
+    trusted = trusted_pillar(pillar)
+    if not trusted:
+        return ""
+    description = trusted.description or "No further description was provided."
+    return (
+        f"Selected content pillar (strategic theme; not a guarantee of engagement or performance): "
+        f"{trusted.name}. {description} "
+        "Align the draft with this pillar. Do not replace the topic, keywords, or brand profile. "
+        "Do not claim this pillar was measured or that it will perform well."
+    )
+
+
+def _append_pillar(user_parts: list[str], pillar: Optional[PillarContext]) -> None:
+    block = build_pillar_block(pillar)
+    if block:
+        user_parts.append(block)
+
+
 def format_instructions(platform: str, content_format: str) -> str:
     if content_format == "text_post":
         return (
@@ -212,6 +277,7 @@ def build_studio_messages(
     keywords: str = "",
     extra_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
 ) -> list[dict[str, str]]:
     assert_supported(platform, content_format)
     topic = _clip(topic, MAX_TOPIC)
@@ -233,6 +299,7 @@ def build_studio_messages(
         "",
         f"Topic / brief: {topic}",
     ]
+    _append_pillar(user_parts, pillar)
     if key_points:
         user_parts.append(f"Key points: {_clip(key_points, MAX_TEXT)}")
     if call_to_action:
@@ -351,6 +418,26 @@ def assert_refine_action(action: str) -> str:
     return key
 
 
+def assert_variation_angle(angle: str) -> str:
+    key = (angle or "").strip().lower()
+    if key in ("", "distinct"):
+        return ""
+    if key == "mixed":
+        return "mixed"
+    if key not in VARIATION_ANGLES:
+        raise ValueError(f"Unsupported variation angle: {angle}")
+    return key
+
+
+def variation_angle_labels(angle: str) -> list[str]:
+    key = assert_variation_angle(angle)
+    if key == "mixed":
+        return list(MIXED_VARIATION_ANGLES)
+    if key:
+        return [key, key, key]
+    return ["distinct", "distinct", "distinct"]
+
+
 def assert_repurpose_target(
     source_platform: str,
     source_format: str,
@@ -392,6 +479,7 @@ def build_refine_messages(
     action: str,
     custom_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
 ) -> list[dict[str, str]]:
     assert_supported(platform, content_format)
     action_key = assert_refine_action(action)
@@ -409,6 +497,7 @@ def build_refine_messages(
         f"Rewrite action: {action_key}",
         REFINE_ACTIONS[action_key],
     ]
+    _append_pillar(user_parts, pillar)
     if custom:
         user_parts.append(f"Custom instructions: {custom}")
     user_parts.append("Write in the brand's language when one is provided.")
@@ -425,14 +514,20 @@ def build_variations_messages(
     source: GeneratedContent,
     custom_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
+    angle: str = "",
+    topic: str = "",
 ) -> list[dict[str, str]]:
     assert_supported(platform, content_format)
+    angle_key = assert_variation_angle(angle)
+    labels = variation_angle_labels(angle_key)
     system = (
         "You write three distinct rewrites of an existing social draft. "
         "Do not mention that you are an AI. Never instruct the user to publish. "
         "Never produce LinkedIn, Instagram, or Meta API payloads. "
         "Do not invent statistics, quotes, testimonials, or personal experiences. "
-        "Preserve the core message and factual details. "
+        "Preserve the original topic, intended audience, core message, and factual details. "
+        "Keep the same platform and format. "
         "Each alternative must use different wording and structure. "
         "Respond with a single JSON object: "
         '{"alternatives": [draft, draft, draft]} where each draft matches the format schema. '
@@ -449,6 +544,68 @@ def build_variations_messages(
         "",
         "Produce exactly three distinct alternatives for the same platform and format.",
     ]
+    topic_clip = _clip(topic, MAX_TOPIC)
+    if topic_clip:
+        user_parts.append(f"Original topic / brief: {topic_clip}")
+    if angle_key == "mixed":
+        user_parts.append("Assign these creative angles in order:")
+        for index, label in enumerate(labels, start=1):
+            user_parts.append(f"{index}. {label}: {VARIATION_ANGLES[label]}")
+    elif angle_key:
+        user_parts.append(f"Creative angle for all three alternatives: {angle_key}.")
+        user_parts.append(VARIATION_ANGLES[angle_key])
+        user_parts.append("Vary structure and wording, but stay on this angle.")
+    _append_pillar(user_parts, pillar)
+    custom = _clip(custom_instructions, MAX_CUSTOM)
+    if custom:
+        user_parts.append(f"Additional direction: {custom}")
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": "\n".join(user_parts)},
+    ]
+
+
+def build_hooks_messages(
+    *,
+    platform: str,
+    content_format: str,
+    source: GeneratedContent,
+    custom_instructions: str = "",
+    brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
+    topic: str = "",
+) -> list[dict[str, str]]:
+    assert_supported(platform, content_format)
+    system = (
+        "You write opening hooks for an existing social draft. "
+        "Return hooks only, not a rewritten post, caption, carousel, or script. "
+        "Do not mention that you are an AI. Never instruct the user to publish. "
+        "Do not invent statistics, quotes, testimonials, or personal experiences. "
+        "Each hook must be relevant to the source and distinct. "
+        f'Respond with a single JSON object: {{"hooks":[{{"text":"...","angle":"question"}}]}} '
+        f"with exactly {REQUIRED_HOOKS} hooks. Each text is at most {MAX_HOOK} characters. "
+        "angle must be one of educational, storytelling, opinion, practical, question. "
+        f"Platform: {platform}. Format: {content_format}."
+    )
+    user_parts = [
+        "Brand profile:",
+        build_brand_block(brand or BrandContext()),
+        "",
+        "Source draft (do not rewrite the full piece):",
+        serialize_source(source),
+        "",
+        f"Write {REQUIRED_HOOKS} alternative openings only.",
+    ]
+    topic_clip = _clip(topic, MAX_TOPIC)
+    if topic_clip:
+        user_parts.append(f"Original topic / brief: {topic_clip}")
+    if content_format == "script":
+        user_parts.append("These replace the spoken hook only.")
+    elif content_format == "carousel":
+        user_parts.append("These replace the first slide text only.")
+    else:
+        user_parts.append("These replace the opening paragraph or first line only.")
+    _append_pillar(user_parts, pillar)
     custom = _clip(custom_instructions, MAX_CUSTOM)
     if custom:
         user_parts.append(f"Additional direction: {custom}")
@@ -467,6 +624,7 @@ def build_repurpose_messages(
     source: GeneratedContent,
     custom_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
 ) -> list[dict[str, str]]:
     assert_repurpose_target(source_platform, source_format, target_platform, target_format)
     system = _rewrite_system(target_platform, target_format)
@@ -483,6 +641,7 @@ def build_repurpose_messages(
         "Do not merely append hashtags or swap platform names.",
         "Keep the key message and factual details. Do not invent new claims.",
     ]
+    _append_pillar(user_parts, pillar)
     custom = _clip(custom_instructions, MAX_CUSTOM)
     if custom:
         user_parts.append(f"Additional direction: {custom}")
@@ -517,6 +676,36 @@ def validate_three_alternatives(data: dict[str, Any], content_format: str) -> li
     return validated
 
 
+def validate_hooks(data: dict[str, Any]) -> list[dict[str, str]]:
+    hooks = data.get("hooks")
+    if not isinstance(hooks, list) or len(hooks) != REQUIRED_HOOKS:
+        raise GenerationError(f"The model must return exactly {REQUIRED_HOOKS} hooks.")
+    cleaned: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for item in hooks:
+        if isinstance(item, str):
+            text = item.strip()
+            angle = ""
+        elif isinstance(item, dict):
+            text = str(item.get("text") or "").strip()
+            angle = str(item.get("angle") or "").strip().lower()
+            if angle not in VARIATION_ANGLES:
+                angle = ""
+        else:
+            raise GenerationError("Each hook must be a string or object.")
+        if not text:
+            raise GenerationError("Hooks cannot be empty.")
+        if len(text) > MAX_HOOK:
+            trimmed = text[:MAX_HOOK]
+            text = trimmed.rsplit(" ", 1)[0] or trimmed
+        signature = text.lower()
+        if signature in seen:
+            raise GenerationError("The hooks were too similar to use.")
+        seen.add(signature)
+        cleaned.append({"text": text, "angle": angle})
+    return cleaned
+
+
 def generate_studio_draft(
     *,
     api_key: str,
@@ -529,6 +718,7 @@ def generate_studio_draft(
     keywords: str = "",
     extra_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
     openai_create: Optional[OpenAICreate] = None,
 ) -> dict[str, Any]:
     messages = build_studio_messages(
@@ -540,6 +730,7 @@ def generate_studio_draft(
         keywords=keywords,
         extra_instructions=extra_instructions,
         brand=brand,
+        pillar=pillar,
     )
     parsed = request_json_completion(
         api_key=api_key,
@@ -561,6 +752,7 @@ def generate_refinement(
     action: str,
     custom_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
     openai_create: Optional[OpenAICreate] = None,
 ) -> dict[str, Any]:
     draft = validate_source_draft(source, content_format)
@@ -571,6 +763,7 @@ def generate_refinement(
         action=action,
         custom_instructions=custom_instructions,
         brand=brand,
+        pillar=pillar,
     )
     parsed = request_json_completion(
         api_key=api_key,
@@ -592,15 +785,22 @@ def generate_variations(
     source: dict[str, Any],
     custom_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
+    angle: str = "",
+    topic: str = "",
     openai_create: Optional[OpenAICreate] = None,
 ) -> list[dict[str, Any]]:
     draft = validate_source_draft(source, content_format)
+    angle_key = assert_variation_angle(angle)
     messages = build_variations_messages(
         platform=platform,
         content_format=content_format,
         source=draft,
         custom_instructions=custom_instructions,
         brand=brand,
+        pillar=pillar,
+        angle=angle_key,
+        topic=topic,
     )
     parsed = request_json_completion(
         api_key=api_key,
@@ -610,7 +810,47 @@ def generate_variations(
         temperature=0.85,
     )
     alternatives = validate_three_alternatives(parsed, content_format)
-    return [as_draft_payload(item, platform, content_format, model) for item in alternatives]
+    labels = variation_angle_labels(angle_key)
+    payloads: list[dict[str, Any]] = []
+    for item, label in zip(alternatives, labels, strict=True):
+        payload = as_draft_payload(item, platform, content_format, model)
+        payload["angle"] = label
+        payloads.append(payload)
+    return payloads
+
+
+def generate_hooks(
+    *,
+    api_key: str,
+    model: str,
+    platform: str,
+    content_format: str,
+    source: dict[str, Any],
+    custom_instructions: str = "",
+    brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
+    topic: str = "",
+    openai_create: Optional[OpenAICreate] = None,
+) -> dict[str, Any]:
+    draft = validate_source_draft(source, content_format)
+    messages = build_hooks_messages(
+        platform=platform,
+        content_format=content_format,
+        source=draft,
+        custom_instructions=custom_instructions,
+        brand=brand,
+        pillar=pillar,
+        topic=topic,
+    )
+    parsed = request_json_completion(
+        api_key=api_key,
+        model=model,
+        messages=messages,
+        openai_create=openai_create,
+        temperature=0.8,
+    )
+    hooks = validate_hooks(parsed)
+    return {"hooks": hooks, "status": "draft", "model": model}
 
 
 def generate_repurpose(
@@ -624,6 +864,7 @@ def generate_repurpose(
     source: dict[str, Any],
     custom_instructions: str = "",
     brand: Optional[BrandContext] = None,
+    pillar: Optional[PillarContext] = None,
     openai_create: Optional[OpenAICreate] = None,
 ) -> dict[str, Any]:
     draft = validate_source_draft(source, source_format)
@@ -635,6 +876,7 @@ def generate_repurpose(
         source=draft,
         custom_instructions=custom_instructions,
         brand=brand,
+        pillar=pillar,
     )
     parsed = request_json_completion(
         api_key=api_key,

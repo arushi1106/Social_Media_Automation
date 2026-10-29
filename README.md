@@ -1,6 +1,6 @@
 # Content Studio MVP
 
-AI-powered draft studio for creators and personal brands. It stores brand voice, suggests topics, plans a writing week, generates LinkedIn and Instagram drafts, lets you review and rewrite them, and does **not** auto-publish.
+AI-powered draft studio for creators and personal brands. It stores brand voice and content pillars, suggests topics, plans a writing week, generates LinkedIn and Instagram drafts, lets you review and rewrite them, and does **not** auto-publish.
 
 This repository started as a Flask automation script (`app.py`) that scraped Google News, called OpenAI, then published. That code is preserved. The product path is:
 
@@ -8,7 +8,7 @@ This repository started as a Flask automation script (`app.py`) that scraped Goo
 - `api/` — FastAPI extraction + generation
 - `supabase/migrations/` — Postgres schema and RLS
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/SETUP.md](docs/SETUP.md).
+See [ARCHITECTURE.md](ARCHITECTURE.md), [docs/SETUP.md](docs/SETUP.md), and [docs/RELEASE.md](docs/RELEASE.md) for the launch checklist.
 
 ```bash
 make install-api

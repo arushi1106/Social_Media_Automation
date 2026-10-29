@@ -22,6 +22,9 @@ export const DIMENSION_WEIGHTS: Record<ReviewDimensionKey, number> = {
   cta: 10,
 };
 
+export const REVIEW_SECTION_TITLE = "Quality review";
+export const REVIEW_ACTION_LABEL = "Review content";
+
 export const DIMENSION_LABELS: Record<ReviewDimensionKey, string> = {
   hook: "Hook and opening",
   clarity: "Clarity and readability",

@@ -1,4 +1,4 @@
-import { isPlatform, parseTopics, type BrandDraft, type Platform } from "@/lib/brand";
+import { isPlatform, type BrandDraft, type Platform } from "@/lib/brand";
 
 export const CONTENT_FORMATS = ["text_post", "caption", "carousel", "script"] as const;
 export type ContentFormat = (typeof CONTENT_FORMATS)[number];
@@ -31,6 +31,9 @@ export type CreateFormState = {
   callToAction: string;
   keywords: string;
   extraInstructions: string;
+  pillarId: string;
+  pillarName: string;
+  pillarDescription: string;
 };
 
 export type CreateFieldErrors = Partial<Record<keyof CreateFormState | "form", string>>;
@@ -67,8 +70,21 @@ export type DraftWritePayload = {
   };
 };
 
-export function emptyCreateForm(platforms: Platform[]): CreateFormState {
-  const platform = platforms[0] ?? "linkedin";
+export function resolveCreatePlatform(
+  platforms: Platform[],
+  preferredPlatform?: Platform | "",
+): Platform {
+  if (preferredPlatform && isPlatform(preferredPlatform) && platforms.includes(preferredPlatform)) {
+    return preferredPlatform;
+  }
+  return platforms[0] ?? "linkedin";
+}
+
+export function emptyCreateForm(
+  platforms: Platform[],
+  preferredPlatform?: Platform | "",
+): CreateFormState {
+  const platform = resolveCreatePlatform(platforms, preferredPlatform);
   const formats = FORMATS_BY_PLATFORM[platform];
   return {
     platform,
@@ -78,6 +94,22 @@ export function emptyCreateForm(platforms: Platform[]): CreateFormState {
     callToAction: "",
     keywords: "",
     extraInstructions: "",
+    pillarId: "",
+    pillarName: "",
+    pillarDescription: "",
+  };
+}
+
+export function hydrateCreateForm(
+  stored: Partial<CreateFormState> | null,
+  fallback: CreateFormState,
+): CreateFormState {
+  return {
+    ...fallback,
+    ...stored,
+    pillarId: stored?.pillarId ?? "",
+    pillarName: stored?.pillarName ?? "",
+    pillarDescription: stored?.pillarDescription ?? "",
   };
 }
 
@@ -140,21 +172,8 @@ export function flattenGeneratedText(content: GeneratedContent): string {
   return parts.join("\n\n").trim();
 }
 
-export function brandToApi(brand: BrandDraft) {
-  return {
-    name: brand.name,
-    niche: brand.niche,
-    bio: brand.bio,
-    audience: brand.audience,
-    tone: brand.tone,
-    custom_tone: brand.customTone,
-    writing_style: brand.writingStyle,
-    avoid: brand.avoid,
-    language: brand.language,
-    platforms: brand.platforms,
-    goals: brand.goals,
-    topics: parseTopics(brand.topicsText),
-  };
+export function brandToApi(_brand: BrandDraft, brandId: string) {
+  return { id: brandId };
 }
 
 export function toDraftWritePayload(
@@ -181,6 +200,29 @@ export function toDraftWritePayload(
 
 export function isOwnedBy(row: { user_id: string }, sessionUserId: string): boolean {
   return Boolean(sessionUserId) && row.user_id === sessionUserId;
+}
+
+export function withTrustedPillarSnapshot(
+  inputs: CreateFormState,
+  pillar: { id: string; name: string; description: string } | null,
+): CreateFormState {
+  if (!pillar) {
+    if (!inputs.pillarId.trim()) {
+      return { ...inputs, pillarId: "", pillarName: "", pillarDescription: "" };
+    }
+    return {
+      ...inputs,
+      pillarId: inputs.pillarId.trim(),
+      pillarName: inputs.pillarName.trim(),
+      pillarDescription: inputs.pillarDescription.trim(),
+    };
+  }
+  return {
+    ...inputs,
+    pillarId: pillar.id,
+    pillarName: pillar.name,
+    pillarDescription: pillar.description,
+  };
 }
 
 export function contentEquals(a: GeneratedContent, b: GeneratedContent): boolean {

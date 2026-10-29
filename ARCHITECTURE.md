@@ -54,6 +54,7 @@ Secrets (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, DB URLs) stay on the ser
 - `content_items` — platform-specific drafts, optional brand + source FKs
 - `content_ideas` — saved topic suggestions (owner-only RLS); not posts
 - `content_plan_items` — weekly writing slots linking an idea to a weekday; not a publish calendar
+- `content_pillars` — named brand themes (name + description), owner-only; distinct from `brands.topics`
 
 ## Migration steps (phased)
 
@@ -64,7 +65,16 @@ Secrets (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, DB URLs) stay on the ser
 5. **Phase 5** — Brand-aware topic discovery and a persistent idea bank (`content_ideas`). Create draft from an idea reuses Phase 3 generation. Still no auto-publish.
 6. **Phase 6** — Weekly content planner (`/studio/planner`, `content_plan_items`). Organise saved ideas by weekday and track planned → drafted. Still no auto-publish or scheduling.
 7. **Phase 7** — Advisory quality review on saved drafts (`POST /v1/content/review`). Weighted scorecard; does not replace refine and does not predict performance. Still no auto-publish.
-8. **Later** — Optional extras only after review is reliable. Still no auto-publish.
+8. **Phase 8.1** — Content pillars on `/studio/brand` (`content_pillars`). CRUD for recurring themes. Does not change generation or publish.
+9. **Phase 8.2** — Optional selected pillar as strategic context on the existing generate/refine/repurpose path. Next.js loads the owned row via RLS and FastAPI uses id+name only as trusted prompt context. Snapshot stored in `content_items.metadata.inputs`. Still no auto-publish. No new table.
+10. **Phase 8.3** — Content strategy overview at `/studio/strategy`: saved-draft mix, gap notes, and deterministic next steps from owned pillars + `content_items`. No analytics, no new table, no auto-publish.
+11. **Phase 8.4** — Creative angles on existing `/v1/content/variations`, hook-only `/v1/content/hooks`, compare/select/apply in the draft editor. Transient alternatives; saved draft unchanged until apply+save. Still no auto-publish. No new table.
+12. **Phase 8.5** — Search, filter, sort, duplicate, and confirmed delete on the existing `/studio/drafts` library. Client-side over owned rows. No archive status (would need a migration). Still no auto-publish.
+13. **Phase 8.6** — Optional preferred platform in existing `brands.voice_preferences` JSON; idea/pillar query params still win. Last-draft session link and unsaved-navigation guard. No new table.
+14. **Phase 8.7** — Reliability: CORS method allowlist, sanitized model errors, documented FastAPI vs Next.js trust boundary, throttle 8/min/user. Still no auto-publish.
+15. **Phase 8.8** — UX consistency (current nav, skip link), [docs/RELEASE.md](docs/RELEASE.md) launch checklist. Release candidate after automated checks; not production-ready until manual and ops rows are done. Still no auto-publish.
+16. **Phase 8.9** — FastAPI loads owned `brands` / `content_pillars` via the user JWT and anon key (RLS). Client brand/pillar text is not trusted. No new table. Still no auto-publish.
+17. **Later** — Planner/idea-bank pillar planning. Still no auto-publish.
 
 ## Explicit non-goals
 

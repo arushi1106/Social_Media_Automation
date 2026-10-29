@@ -17,8 +17,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(sources_router)
@@ -35,4 +35,5 @@ def health() -> dict:
         "auth_configured": settings.auth_configured,
         "jwt_jwks_configured": settings.jwt_jwks_configured,
         "jwt_hs256_configured": settings.jwt_hs256_configured,
+        "studio_context_configured": settings.studio_context_configured,
     }

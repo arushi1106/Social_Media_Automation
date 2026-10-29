@@ -145,9 +145,13 @@ export function editorStatusLabel(options: {
   savedEqualsWorking: boolean;
   hasProposal: boolean;
   hasAlternatives: boolean;
+  hasHooks?: boolean;
 }): string {
+  if (options.hasHooks) {
+    return "Hook options are ready. Select one and apply it to replace only the opening. Nothing is saved yet.";
+  }
   if (options.hasAlternatives) {
-    return "Three alternatives are ready. Select one to edit. Nothing is saved yet.";
+    return "Alternatives are ready. Select one, then apply it to the editor. The saved draft is unchanged until you apply and save.";
   }
   if (options.hasProposal) {
     return "A rewrite is ready to apply. The saved draft is unchanged until you apply and save.";

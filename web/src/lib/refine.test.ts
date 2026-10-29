@@ -75,12 +75,17 @@ describe("draft safety helpers", () => {
         callToAction: "",
         keywords: "",
         extraInstructions: "",
+        pillarId: "p1",
+        pillarName: "Education",
+        pillarDescription: "Practical explainers.",
       },
       result,
     );
     expect(inputs.platform).toBe("instagram");
     expect(inputs.format).toBe("caption");
     expect(inputs.topic).toBe("Evals");
+    expect(inputs.pillarId).toBe("p1");
+    expect(inputs.pillarName).toBe("Education");
   });
 
   it("explains saved vs proposal vs alternatives", () => {
@@ -94,7 +99,15 @@ describe("draft safety helpers", () => {
       /unchanged until you apply/,
     );
     expect(editorStatusLabel({ savedEqualsWorking: true, hasProposal: false, hasAlternatives: true })).toMatch(
-      /Nothing is saved/,
+      /unchanged until you apply/,
     );
+    expect(
+      editorStatusLabel({
+        savedEqualsWorking: true,
+        hasProposal: false,
+        hasAlternatives: false,
+        hasHooks: true,
+      }),
+    ).toMatch(/Hook options/);
   });
 });

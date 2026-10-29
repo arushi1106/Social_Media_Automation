@@ -8,11 +8,13 @@ from api.services.generation import (
     GenerationError,
     PLATFORM_INSTRUCTIONS,
     STUDIO_PLATFORMS,
+    PillarContext,
     assert_supported,
     build_messages,
     build_studio_messages,
     extract_json_object,
     generate_studio_draft,
+    trusted_pillar,
     validate_generated_content,
 )
 
@@ -71,6 +73,54 @@ def test_studio_messages_include_brand_profile_fields():
     assert "Why evals matter" in blob
     assert "Save this post" in blob
     assert "json" in messages[0]["content"].lower()
+
+
+def test_studio_messages_include_trusted_pillar_and_keep_keywords():
+    brand = BrandContext(
+        name="Northstar",
+        audience="Consultants",
+        topics=["LLMs"],
+    )
+    messages = build_studio_messages(
+        platform="linkedin",
+        content_format="text_post",
+        topic="Why evals matter",
+        keywords="golden set, evals",
+        brand=brand,
+        pillar=PillarContext(
+            id="p1",
+            name="Education",
+            description="Practical explainers for consultants.",
+        ),
+    )
+    blob = messages[1]["content"]
+    assert "Education" in blob
+    assert "Practical explainers" in blob
+    assert "golden set, evals" in blob
+    assert "Northstar" in blob
+    assert "LLMs" in blob
+    assert "not a guarantee of engagement" in blob
+    assert "Why evals matter" in blob
+
+
+def test_studio_messages_omit_pillar_when_none_or_name_only():
+    without = build_studio_messages(
+        platform="linkedin",
+        content_format="text_post",
+        topic="Why evals matter",
+        keywords="evals",
+    )
+    assert "Selected content pillar" not in without[1]["content"]
+    assert "evals" in without[1]["content"]
+    spoofed = build_studio_messages(
+        platform="linkedin",
+        content_format="text_post",
+        topic="Why evals matter",
+        pillar=PillarContext(id="", name="Stolen theme", description="Should be ignored."),
+    )
+    assert "Stolen theme" not in spoofed[1]["content"]
+    assert trusted_pillar(PillarContext(id="", name="Stolen theme")) is None
+    assert trusted_pillar(None) is None
 
 
 def test_validate_text_post_and_carousel():

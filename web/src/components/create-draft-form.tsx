@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { generateStudioDraft, saveStudioDraft } from "@/app/studio/actions";
 import { markIdeaUsed } from "@/app/studio/ideas/actions";
 import { markPlanItemDrafted } from "@/app/studio/planner/actions";
 import { isExpiredSessionMessage } from "@/lib/api-auth";
 import { formatPlatform, type BrandDraft, type Platform } from "@/lib/brand";
+import type { ContentPillar } from "@/lib/pillars";
 import {
   emptyCreateForm,
   flattenGeneratedText,
@@ -24,18 +26,24 @@ import { DraftPreview } from "@/components/draft-preview";
 
 export function CreateDraftForm({
   brand,
+  pillars = [],
   initialForm,
+  pillarUnavailable = false,
   ideaId,
   planItemId,
 }: {
   brand: BrandDraft;
+  pillars?: ContentPillar[];
   initialForm?: CreateFormState;
+  pillarUnavailable?: boolean;
   ideaId?: string;
   planItemId?: string;
 }) {
   const router = useRouter();
   const allowed = brand.platforms.length ? brand.platforms : (["linkedin"] as Platform[]);
-  const [form, setForm] = useState<CreateFormState>(() => initialForm ?? emptyCreateForm(allowed));
+  const [form, setForm] = useState<CreateFormState>(
+    () => initialForm ?? emptyCreateForm(allowed, brand.preferredPlatform),
+  );
   const [errors, setErrors] = useState<CreateFieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState<"generate" | "save" | null>(null);
@@ -43,6 +51,7 @@ export function CreateDraftForm({
   const [copied, setCopied] = useState(false);
 
   const formatOptions = useMemo(() => formatsForPlatform(form.platform), [form.platform]);
+  const selectedPillar = pillars.find((item) => item.id === form.pillarId) ?? null;
 
   function update<K extends keyof CreateFormState>(key: K, value: CreateFormState[K]) {
     setForm((current) => {
@@ -84,6 +93,14 @@ export function CreateDraftForm({
         return;
       }
       setResult(response.content);
+      if (selectedPillar) {
+        setForm((current) => ({
+          ...current,
+          pillarId: selectedPillar.id,
+          pillarName: selectedPillar.name,
+          pillarDescription: selectedPillar.description,
+        }));
+      }
     } catch {
       setMessage("Generation failed. Try again.");
     } finally {
@@ -186,6 +203,56 @@ export function CreateDraftForm({
               </p>
             ) : null}
           </fieldset>
+          <div>
+            <Label htmlFor="pillar">Content pillar (optional)</Label>
+            {pillars.length === 0 ? (
+              <p className="text-sm leading-6 text-ink/70">
+                No saved pillars yet. Generation still works from your topic and brand.{" "}
+                <Link href="/studio/brand" className="underline underline-offset-2">
+                  Add pillars in Brand settings
+                </Link>
+                .
+              </p>
+            ) : (
+              <>
+                <select
+                  id="pillar"
+                  className="w-full rounded-xl border border-ink/15 bg-paper px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  value={form.pillarId}
+                  aria-invalid={Boolean(errors.pillarId)}
+                  onChange={(event) => update("pillarId", event.target.value)}
+                >
+                  <option value="">No pillar — use topic and brand only</option>
+                  {pillars.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedPillar ? (
+                  <p className="mt-1.5 text-sm leading-6 text-ink/70">{selectedPillar.description}</p>
+                ) : (
+                  <p className="mt-1.5 text-sm leading-6 text-ink/70">
+                    Choose a saved theme or leave this blank. Nothing is selected by default.
+                  </p>
+                )}
+              </>
+            )}
+            {pillarUnavailable && !form.pillarId ? (
+              <p className="mt-1.5 text-sm text-accent" role="alert">
+                That content pillar is no longer available. Choose another or continue without
+                one. Nothing else was substituted.
+              </p>
+            ) : null}
+            {errors.pillarId ? (
+              <p className="mt-1.5 text-sm text-accent" role="alert">
+                {errors.pillarId}
+              </p>
+            ) : null}
+            <p className="mt-1.5 text-xs leading-5 text-ink/55">
+              Pillars guide content direction. They do not guarantee engagement or performance.
+            </p>
+          </div>
           <div>
             <Label htmlFor="topic">Topic or brief</Label>
             <Textarea

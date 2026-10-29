@@ -99,6 +99,15 @@ describe("structured persistence mapping", () => {
     expect(draft.goals).toEqual(["educate"]);
     expect(draft.tone).toBe("witty");
     expect(draft.topicsText).toBe("LLMs");
+    expect(draft.preferredPlatform).toBe("");
+  });
+
+  it("stores an optional default platform and ignores one not on the brand", () => {
+    const payload = toBrandWritePayload(validDraft({ preferredPlatform: "linkedin" }), "session-user");
+    expect(payload.voice_preferences.preferredPlatform).toBe("linkedin");
+    const cleared = toBrandWritePayload(validDraft({ preferredPlatform: "" }), "session-user");
+    expect(cleared.voice_preferences.preferredPlatform).toBeUndefined();
+    expect(validateBrandDraft(validDraft({ preferredPlatform: "instagram" })).platforms).toBeTruthy();
   });
 });
 

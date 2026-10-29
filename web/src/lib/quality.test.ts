@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DIMENSION_WEIGHTS,
+  REVIEW_ACTION_LABEL,
+  REVIEW_SECTION_TITLE,
   computeOverallScore,
   parseQualityReview,
   readinessFromScore,
@@ -28,6 +30,13 @@ const full: ReviewDimension[] = [
   dim("platform_fit", 78),
   dim("cta", 50),
 ];
+
+describe("review UI copy", () => {
+  it("exposes a visible section title and action label", () => {
+    expect(REVIEW_SECTION_TITLE).toBe("Quality review");
+    expect(REVIEW_ACTION_LABEL).toBe("Review content");
+  });
+});
 
 describe("quality weighting", () => {
   it("keeps documented weights that sum to 100", () => {

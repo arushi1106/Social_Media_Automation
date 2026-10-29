@@ -1,15 +1,7 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { Suspense } from "react";
 import { SignOutButton } from "@/components/sign-out-button";
-
-const links = [
-  { href: "/studio", label: "Overview" },
-  { href: "/studio/ideas", label: "Ideas" },
-  { href: "/studio/planner", label: "Planner" },
-  { href: "/studio/create", label: "New draft" },
-  { href: "/studio/drafts", label: "Drafts" },
-  { href: "/studio/brand", label: "Brand" },
-];
+import { StudioNav } from "@/components/studio-nav";
 
 export function StudioShell({
   title,
@@ -35,17 +27,9 @@ export function StudioShell({
         </div>
         <SignOutButton />
       </div>
-      <nav className="mt-6 flex flex-wrap gap-2" aria-label="Studio">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink/80 hover:bg-ink/5"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      <Suspense fallback={<nav className="mt-6 min-h-8" aria-label="Studio" />}>
+        <StudioNav />
+      </Suspense>
       <div className="mt-8">{children}</div>
     </main>
   );

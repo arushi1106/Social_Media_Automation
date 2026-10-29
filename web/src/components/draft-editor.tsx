@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  generateStudioHooks,
   generateStudioVariations,
   refineStudioDraft,
   repurposeStudioDraft,
@@ -10,7 +12,7 @@ import {
   saveStudioDraft,
   updateStudioDraft,
 } from "@/app/studio/actions";
-import { QualityReviewPanel } from "@/components/quality-review";
+import { QualityReviewSection } from "@/components/quality-review";
 import type { QualityReview } from "@/lib/quality";
 import { isExpiredSessionMessage } from "@/lib/api-auth";
 import { formatPlatform } from "@/lib/brand";
@@ -30,12 +32,23 @@ import {
   supportedRepurposeOptions,
   type RefineAction,
 } from "@/lib/refine";
-import { Button } from "@/components/ui/button";
+import {
+  VARIATION_ANGLES,
+  VARIATION_ANGLE_LABELS,
+  applyHookToContent,
+  hookAngleLabel,
+  labelsForVariationAngle,
+  variationDifference,
+  type HookOption,
+  type VariationAngle,
+} from "@/lib/variations";
+import { rememberLastDraftId } from "@/lib/studio-session";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { DraftPreview } from "@/components/draft-preview";
 
-type Pending = "save" | "refine" | "variations" | "repurpose" | "save-new" | "review" | null;
+type Pending = "save" | "refine" | "variations" | "hooks" | "repurpose" | "save-new" | "review" | null;
 
 export function DraftEditor({
   draftId,
@@ -52,6 +65,10 @@ export function DraftEditor({
   const [proposal, setProposal] = useState<GeneratedContent | null>(null);
   const [alternatives, setAlternatives] = useState<GeneratedContent[] | null>(null);
   const [selectedAlternative, setSelectedAlternative] = useState<number | null>(null);
+  const [variationAngle, setVariationAngle] = useState<VariationAngle>("mixed");
+  const [resultAngle, setResultAngle] = useState<VariationAngle>("mixed");
+  const [hooks, setHooks] = useState<HookOption[] | null>(null);
+  const [selectedHook, setSelectedHook] = useState<number | null>(null);
   const [repurposeResult, setRepurposeResult] = useState<GeneratedContent | null>(null);
   const [customInstructions, setCustomInstructions] = useState("");
   const [target, setTarget] = useState(() => defaultRepurposeTarget(initial));
@@ -59,6 +76,7 @@ export function DraftEditor({
   const [pending, setPending] = useState<Pending>(null);
   const [copied, setCopied] = useState(false);
   const [review, setReview] = useState<QualityReview | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const busy = pending !== null;
   const savedEqualsWorking = contentEquals(saved, working);
@@ -66,8 +84,25 @@ export function DraftEditor({
     savedEqualsWorking,
     hasProposal: Boolean(proposal),
     hasAlternatives: Boolean(alternatives?.length),
+    hasHooks: Boolean(hooks?.length),
   });
+  const alternativeLabels = labelsForVariationAngle(resultAngle);
   const repurposeOptions = useMemo(() => supportedRepurposeOptions(saved), [saved]);
+  const leaveGuard = !savedEqualsWorking || Boolean(proposal || alternatives?.length || hooks?.length || repurposeResult);
+
+  useEffect(() => {
+    rememberLastDraftId(draftId);
+  }, [draftId]);
+
+  useEffect(() => {
+    if (!leaveGuard) return;
+    function onLeave(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [leaveGuard]);
 
   function handleExpired(text: string) {
     if (isExpiredSessionMessage(text)) {
@@ -91,6 +126,8 @@ export function DraftEditor({
       setSaved(working);
       setProposal(null);
       setAlternatives(null);
+      setHooks(null);
+      setSelectedHook(null);
       setMessage("Draft saved.");
       router.refresh();
     } catch {
@@ -107,22 +144,17 @@ export function DraftEditor({
 
   async function runReview() {
     setPending("review");
-    setMessage(null);
+    setReviewError(null);
     try {
       const result = await reviewStudioDraft(saved);
       if (!result.ok) {
         if (handleExpired(result.message)) return;
-        setMessage(result.message);
+        setReviewError(result.message);
         return;
       }
       setReview(result.review);
-      setMessage(
-        savedEqualsWorking
-          ? "Advisory review of the saved draft."
-          : "Reviewing the last saved draft. Save first to include unsaved edits.",
-      );
     } catch {
-      setMessage("Could not review this draft. The saved copy is unchanged.");
+      setReviewError("Could not review this draft. The saved copy is unchanged.");
     } finally {
       setPending(null);
     }
@@ -132,7 +164,7 @@ export function DraftEditor({
     setPending("refine");
     setMessage(null);
     try {
-      const result = await refineStudioDraft(working, action, customInstructions);
+      const result = await refineStudioDraft(working, action, customInstructions, inputs);
       if (!result.ok) {
         if (handleExpired(result.message)) return;
         setMessage(result.message);
@@ -140,6 +172,7 @@ export function DraftEditor({
       }
       setProposal(result.content);
       setAlternatives(null);
+      setHooks(null);
       setRepurposeResult(null);
       setMessage("Rewrite ready. Apply it to the editor before saving.");
     } catch {
@@ -153,19 +186,44 @@ export function DraftEditor({
     setPending("variations");
     setMessage(null);
     try {
-      const result = await generateStudioVariations(working, customInstructions);
+      const result = await generateStudioVariations(working, customInstructions, inputs, variationAngle);
       if (!result.ok) {
         if (handleExpired(result.message)) return;
         setMessage(result.message);
         return;
       }
       setAlternatives(result.alternatives);
+      setResultAngle(variationAngle);
       setSelectedAlternative(null);
       setProposal(null);
+      setHooks(null);
       setRepurposeResult(null);
-      setMessage("Select an alternative to edit. Nothing is saved yet.");
+      setMessage("Select an alternative, then apply it. The editor and saved draft are unchanged.");
     } catch {
       setMessage("Could not generate alternatives. Your current draft is unchanged.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function runHooks() {
+    setPending("hooks");
+    setMessage(null);
+    try {
+      const result = await generateStudioHooks(working, customInstructions, inputs);
+      if (!result.ok) {
+        if (handleExpired(result.message)) return;
+        setMessage(result.message);
+        return;
+      }
+      setHooks(result.hooks);
+      setSelectedHook(null);
+      setAlternatives(null);
+      setProposal(null);
+      setRepurposeResult(null);
+      setMessage("Select a hook, then apply it. Only the opening changes when you apply.");
+    } catch {
+      setMessage("Could not generate hooks. Your current draft is unchanged.");
     } finally {
       setPending(null);
     }
@@ -180,6 +238,7 @@ export function DraftEditor({
         target.platform,
         target.format,
         customInstructions,
+        inputs,
       );
       if (!result.ok) {
         if (handleExpired(result.message)) return;
@@ -189,6 +248,7 @@ export function DraftEditor({
       setRepurposeResult(result.content);
       setProposal(null);
       setAlternatives(null);
+      setHooks(null);
       setMessage("Repurposed draft ready. Save it as a new draft to keep the original.");
     } catch {
       setMessage("Repurpose failed. The original draft is unchanged.");
@@ -227,11 +287,30 @@ export function DraftEditor({
     setMessage("Rewrite applied in the editor. Save to persist it.");
   }
 
-  function applyAlternative(index: number) {
+  function selectAlternative(index: number) {
     if (!alternatives?.[index]) return;
     setSelectedAlternative(index);
-    setWorking(alternatives[index]);
-    setMessage("Alternative applied in the editor. Save to persist it.");
+    setMessage("Alternative selected. Apply it to the editor when you want to replace the working copy.");
+  }
+
+  function applySelectedAlternative() {
+    if (selectedAlternative === null || !alternatives?.[selectedAlternative]) return;
+    setWorking(alternatives[selectedAlternative]);
+    setReview(null);
+    setMessage("Alternative applied in the editor. Save to persist it. Quality review was for the previous saved text.");
+  }
+
+  function selectHook(index: number) {
+    if (!hooks?.[index]) return;
+    setSelectedHook(index);
+    setMessage("Hook selected. Apply it to change only the opening.");
+  }
+
+  function applySelectedHook() {
+    if (selectedHook === null || !hooks?.[selectedHook]) return;
+    setWorking(applyHookToContent(working, hooks[selectedHook].text));
+    setReview(null);
+    setMessage("Hook applied to the opening only. Save to persist it. Quality review was for the previous saved text.");
   }
 
   return (
@@ -239,6 +318,21 @@ export function DraftEditor({
       <p className="rounded-xl border border-ink/10 bg-paper-raised px-4 py-3 text-sm text-ink/70" role="status">
         {status}
       </p>
+      <div className="flex flex-wrap gap-2">
+        <ButtonLink href="/studio/drafts" variant="ghost">
+          Back to drafts
+        </ButtonLink>
+      </div>
+      {inputs.pillarId ? (
+        <p className="text-sm leading-6 text-ink/70">
+          {inputs.pillarName
+            ? `Saved with pillar: ${inputs.pillarName}. ${inputs.pillarDescription} Rewrites keep this theme when you apply them. Pillars do not guarantee engagement. `
+            : "This draft referenced a content pillar that is no longer in Brand settings. Rewrites continue without substituting another pillar. "}
+          <Link href="/studio/brand#content-pillars" className="underline underline-offset-2">
+            Manage pillars
+          </Link>
+        </p>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <DraftPreview content={working} />
         <Card>
@@ -338,22 +432,20 @@ export function DraftEditor({
             <Button type="button" variant="ghost" onClick={onCopy} disabled={busy}>
               {copied ? "Copied" : "Copy"}
             </Button>
-            <Button type="button" variant="secondary" onClick={runReview} disabled={busy}>
-              {pending === "review" ? "Reviewing…" : "Review content"}
-            </Button>
           </div>
         </Card>
       </div>
 
-      {pending === "review" ? (
-        <Card>
-          <p className="text-sm text-ink/70">Reviewing the saved draft against your brand profile…</p>
-        </Card>
-      ) : null}
-
-      {review ? (
-        <QualityReviewPanel review={review} onImprove={runRefine} disabled={busy} />
-      ) : null}
+      <QualityReviewSection
+        review={review}
+        pending={pending === "review"}
+        hasUnsavedEdits={!savedEqualsWorking}
+        comparingAlternatives={Boolean(alternatives?.length || hooks?.length)}
+        error={reviewError}
+        onReview={runReview}
+        onImprove={runRefine}
+        disabled={busy}
+      />
 
       <div id="refine-panel">
       <Card>
@@ -372,6 +464,26 @@ export function DraftEditor({
             placeholder="Optional direction for rewrite, alternatives, or repurpose"
           />
         </div>
+        <div className="mt-4">
+          <Label htmlFor="variation-angle">Creative angle for alternatives</Label>
+          <select
+            id="variation-angle"
+            className="mt-1 w-full rounded-xl border border-ink/15 bg-paper px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+            value={variationAngle}
+            onChange={(event) => setVariationAngle(event.target.value as VariationAngle)}
+            disabled={busy}
+          >
+            {VARIATION_ANGLES.map((angle) => (
+              <option key={angle} value={angle}>
+                {VARIATION_ANGLE_LABELS[angle]}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs leading-5 text-ink/55">
+            Alternatives keep this platform, format, topic, brand voice, and pillar snapshot. They are
+            not ranked by predicted engagement.
+          </p>
+        </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {REFINE_ACTIONS.map((action) => (
             <Button
@@ -387,8 +499,11 @@ export function DraftEditor({
           <Button type="button" variant="secondary" onClick={runVariations} disabled={busy}>
             {pending === "variations" ? "Generating alternatives…" : "Generate three alternatives"}
           </Button>
+          <Button type="button" variant="ghost" onClick={runHooks} disabled={busy}>
+            {pending === "hooks" ? "Generating hooks…" : "Generate opening hooks"}
+          </Button>
         </div>
-        {pending === "refine" || pending === "variations" ? (
+        {pending === "refine" || pending === "variations" || pending === "hooks" ? (
           <p className="mt-3 text-sm text-ink/60" role="status">
             Generating… the current editor content is unchanged until you apply a result.
           </p>
@@ -414,30 +529,96 @@ export function DraftEditor({
 
         {alternatives ? (
           <div className="mt-6 space-y-3">
-            <p className="text-xs uppercase tracking-[0.14em] text-ink/50">Alternatives</p>
-            {alternatives.map((item, index) => (
-              <div
-                key={`${item.title}-${index}`}
-                className={`rounded-xl border p-4 ${
-                  selectedAlternative === index ? "border-accent bg-accent/5" : "border-ink/10"
-                }`}
-              >
-                <p className="text-xs text-ink/50">Option {index + 1}</p>
-                <h3 className="mt-1 font-serif text-lg">{item.title}</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink/80">
-                  {flattenGeneratedText(item)}
-                </p>
-                <Button
-                  type="button"
-                  variant={selectedAlternative === index ? "secondary" : "ghost"}
-                  className="mt-3"
-                  onClick={() => applyAlternative(index)}
-                  disabled={busy}
+            <p className="text-xs uppercase tracking-[0.14em] text-ink/50">Compare alternatives</p>
+            <p className="text-sm leading-6 text-ink/70">
+              Original working copy vs generated options. Select one, then apply. Nothing is saved until
+              you save.
+            </p>
+            <div className="rounded-xl border border-ink/10 p-4">
+              <p className="text-xs uppercase tracking-[0.14em] text-ink/50">Original (working copy)</p>
+              <h3 className="mt-1 font-serif text-lg">{working.title}</h3>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink/80">
+                {flattenGeneratedText(working)}
+              </p>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {alternatives.map((item, index) => {
+                const angleKey: VariationAngle = alternativeLabels[index] ?? "distinct";
+                const angleLabel = VARIATION_ANGLE_LABELS[angleKey];
+                return (
+                  <div
+                    key={`${item.title}-${index}`}
+                    className={`rounded-xl border p-4 ${
+                      selectedAlternative === index ? "border-accent bg-accent/5" : "border-ink/10"
+                    }`}
+                  >
+                    <p className="text-xs text-ink/50">
+                      Option {index + 1} · {angleLabel}
+                    </p>
+                    <h3 className="mt-1 font-serif text-lg">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-ink/65">
+                      {variationDifference(working, item, angleLabel)}
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink/80">
+                      {flattenGeneratedText(item)}
+                    </p>
+                    <Button
+                      type="button"
+                      variant={selectedAlternative === index ? "secondary" : "ghost"}
+                      className="mt-3"
+                      onClick={() => selectAlternative(index)}
+                      disabled={busy}
+                    >
+                      {selectedAlternative === index ? "Selected" : "Select this option"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <Button
+              type="button"
+              onClick={applySelectedAlternative}
+              disabled={busy || selectedAlternative === null}
+            >
+              Apply selected alternative to editor
+            </Button>
+          </div>
+        ) : null}
+
+        {hooks ? (
+          <div className="mt-6 space-y-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-ink/50">Opening hooks</p>
+            <p className="text-sm leading-6 text-ink/70">
+              Four openings for this draft. Applying one replaces only the hook, first slide, or first
+              paragraph—not the rest of the piece.
+            </p>
+            {hooks.length === 0 ? (
+              <p className="text-sm text-ink/70">No hooks returned. Try again.</p>
+            ) : (
+              hooks.map((item, index) => (
+                <div
+                  key={`${item.text}-${index}`}
+                  className={`rounded-xl border p-4 ${
+                    selectedHook === index ? "border-accent bg-accent/5" : "border-ink/10"
+                  }`}
                 >
-                  {selectedAlternative === index ? "Selected in editor" : "Edit this option"}
-                </Button>
-              </div>
-            ))}
+                  <p className="text-xs text-ink/50">{hookAngleLabel(item.angle)}</p>
+                  <p className="mt-2 text-sm leading-6 text-ink/80">{item.text}</p>
+                  <Button
+                    type="button"
+                    variant={selectedHook === index ? "secondary" : "ghost"}
+                    className="mt-3"
+                    onClick={() => selectHook(index)}
+                    disabled={busy}
+                  >
+                    {selectedHook === index ? "Selected" : "Select this hook"}
+                  </Button>
+                </div>
+              ))
+            )}
+            <Button type="button" onClick={applySelectedHook} disabled={busy || selectedHook === null}>
+              Apply selected hook to opening
+            </Button>
           </div>
         ) : null}
       </Card>

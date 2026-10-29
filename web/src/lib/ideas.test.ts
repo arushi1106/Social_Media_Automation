@@ -79,6 +79,14 @@ describe("ideaToCreateForm", () => {
     expect(form.keyPoints).toContain("small eval set");
     expect(form.extraInstructions).toContain("Stop arguing about quality.");
     expect(form.callToAction).toContain("Comment");
+    expect(form.pillarId).toBe("");
+    expect(form.keywords).toBe("evals");
+  });
+
+  it("keeps the idea platform even when a brand default would differ", () => {
+    const form = ideaToCreateForm(sample, ["instagram", "linkedin"]);
+    expect(form.platform).toBe("linkedin");
+    expect(form.pillarId).toBe("");
   });
 });
 

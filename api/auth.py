@@ -15,9 +15,10 @@ ALLOWED_ALGS = frozenset({HS256, *ASYMMETRIC})
 
 
 class CurrentUser:
-    def __init__(self, user_id: str, email: Optional[str] = None):
+    def __init__(self, user_id: str, email: Optional[str] = None, token: str = ""):
         self.id = user_id
         self.email = email
+        self.token = token
 
 
 class TokenError(Exception):
@@ -143,4 +144,4 @@ def require_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token is missing a user id.",
         )
-    return CurrentUser(user_id=str(user_id), email=payload.get("email"))
+    return CurrentUser(user_id=str(user_id), email=payload.get("email"), token=token)
