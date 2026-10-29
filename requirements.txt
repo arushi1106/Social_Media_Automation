@@ -1,0 +1,25 @@
+# Original automation stack (preserved)
+Flask==3.0.2
+Flask-PyMongo==2.3.0
+Flask-SQLAlchemy==3.1.1
+GoogleNews==1.6.12
+beautifulsoup4==4.12.3
+openai==1.12.0
+pandas==2.2.0
+pymongo==4.6.1
+python-dotenv==1.0.1
+requests==2.31.0
+SQLAlchemy==2.0.25
+urllib3==2.2.0
+
+# Studio API boundary
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+PyJWT==2.10.1
+cryptography==43.0.3
+httpx==0.26.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# Tests
+pytest==8.3.4

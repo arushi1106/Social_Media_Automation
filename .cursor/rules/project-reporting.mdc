@@ -1,0 +1,81 @@
+---
+description: Mandatory implementation report after every task or prompt
+alwaysApply: true
+---
+
+# Mandatory Task Reporting Rule
+
+After completing every user prompt or implementation task, you MUST generate a task report before considering the task complete.
+
+## 1. Required report format
+
+### Task Report
+
+**1. Objective**
+- Summarise what the user requested.
+- State the intended outcome.
+
+**2. Work Completed**
+- List the changes implemented.
+- Explain the behaviour added, modified, or removed.
+- Distinguish completed work from partially completed work.
+
+**3. Files Changed**
+For every file created, modified, or deleted, include:
+- File path
+- Change made
+- Reason for the change
+
+**4. Technical Decisions**
+- Explain important architectural or implementation decisions.
+- Mention assumptions, trade-offs, and dependencies introduced.
+
+**5. Verification and Tests**
+- List every command, test, build, lint, or type check actually executed.
+- Report the actual outcome of each check.
+- Include relevant errors or warnings.
+- Never claim a test passed unless it was actually run.
+- Clearly distinguish between tests not run, tests failed, and tests passed.
+
+**6. Issues and Risks**
+- List unresolved errors, known limitations, security concerns, and edge cases.
+- Identify anything requiring user input or a follow-up task.
+- If there are no known issues, state that explicitly.
+
+**7. Environment and Configuration**
+- List any new environment variables, packages, migrations, API keys, or configuration changes required.
+- Never reveal secret values. Report variable names only.
+
+**8. Next Steps**
+- List the most logical next actions in priority order.
+- Do not implement unrelated follow-up work without the user's permission.
+
+**9. Completion Status**
+Choose exactly one:
+- COMPLETE — requested scope implemented and verified.
+- PARTIALLY COMPLETE — some requested work remains.
+- BLOCKED — unable to proceed because of a dependency, error, or missing information.
+
+## 2. Reporting rules
+
+- Generate the report after every prompt, including small changes, bug fixes, refactors, and documentation tasks.
+- Do not skip the report because the change appears trivial.
+- Be concise but specific; avoid vague statements such as "improved the code."
+- Report only work actually performed. Never invent changed files, test results, or implementation details.
+- If no files changed, explicitly state that no files were changed and explain why.
+- If a command fails, include the command and a short explanation of the failure.
+- If the task is blocked, report what prevented completion and what is needed to continue.
+- If the user requests only planning or analysis, report the analysis performed without pretending that code was changed.
+- Do not mark a task complete merely because code was generated. Verification must reflect the checks actually performed.
+- Keep the report separate from the implementation summary in the final response.
+- Do not start the next task until the current task report has been provided, unless the user explicitly asks for multiple tasks in one request.
+
+## 3. Repository-specific requirements
+
+For this social media content application:
+- Explicitly identify any changes involving AI generation, authentication, database access, user data, source extraction, or API integrations.
+- Flag accidental automatic social media publishing as a critical scope violation.
+- Do not expose API keys, access tokens, database credentials, or other secrets in reports.
+- Identify any database schema or Row Level Security (RLS) changes.
+- Record whether frontend and backend checks were run, as applicable.
+- State clearly when functionality is mocked, incomplete, or dependent on external credentials.
