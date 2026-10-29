@@ -34,6 +34,7 @@ function idea(id: string): IdeaRecord {
     pillar: "",
     platform: "linkedin",
     status: "saved",
+    projectId: "",
     created_at: "2026-10-01",
     updated_at: "2026-10-01",
   };

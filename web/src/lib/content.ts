@@ -34,6 +34,7 @@ export type CreateFormState = {
   pillarId: string;
   pillarName: string;
   pillarDescription: string;
+  projectId: string;
 };
 
 export type CreateFieldErrors = Partial<Record<keyof CreateFormState | "form", string>>;
@@ -97,6 +98,7 @@ export function emptyCreateForm(
     pillarId: "",
     pillarName: "",
     pillarDescription: "",
+    projectId: "",
   };
 }
 
@@ -110,6 +112,7 @@ export function hydrateCreateForm(
     pillarId: stored?.pillarId ?? "",
     pillarName: stored?.pillarName ?? "",
     pillarDescription: stored?.pillarDescription ?? "",
+    projectId: stored?.projectId ?? "",
   };
 }
 

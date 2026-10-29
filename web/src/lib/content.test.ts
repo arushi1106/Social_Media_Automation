@@ -27,6 +27,7 @@ function form(overrides: Partial<CreateFormState> = {}): CreateFormState {
     pillarId: "",
     pillarName: "",
     pillarDescription: "",
+    projectId: "",
     ...overrides,
   };
 }

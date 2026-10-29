@@ -29,6 +29,8 @@ export function CreateDraftForm({
   pillars = [],
   initialForm,
   pillarUnavailable = false,
+  templateName,
+  templateUnavailable = false,
   ideaId,
   planItemId,
 }: {
@@ -36,6 +38,8 @@ export function CreateDraftForm({
   pillars?: ContentPillar[];
   initialForm?: CreateFormState;
   pillarUnavailable?: boolean;
+  templateName?: string;
+  templateUnavailable?: boolean;
   ideaId?: string;
   planItemId?: string;
 }) {
@@ -149,6 +153,9 @@ export function CreateDraftForm({
             ? " This brief was loaded from a saved idea. The idea is marked used only after you save a draft."
             : null}
           {planItemId ? " Saving will mark the planner slot as drafted, not published." : null}
+          {templateName
+            ? ` Structure from template “${templateName}”. Brand voice and any selected pillar stay in place.`
+            : null}
         </p>
         <div className="mt-6 space-y-5">
           <fieldset>
@@ -294,6 +301,12 @@ export function CreateDraftForm({
               onChange={(event) => update("keywords", event.target.value)}
             />
           </div>
+          {templateUnavailable ? (
+            <p className="text-sm text-accent" role="alert">
+              That template is no longer available. Continue with your topic and brand. Nothing else
+              was substituted.
+            </p>
+          ) : null}
           <div>
             <Label htmlFor="extra">Additional instructions (optional)</Label>
             <Textarea

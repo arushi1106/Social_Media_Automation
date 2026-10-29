@@ -20,6 +20,15 @@ import {
   type LibrarySort,
 } from "@/lib/library";
 import type { ContentPillar } from "@/lib/pillars";
+import {
+  downloadTextFile,
+  draftsToCsv,
+  draftToExportRecord,
+  draftToMarkdown,
+  draftToPlainText,
+  exportFilename,
+  selectedOwnedDrafts,
+} from "@/lib/export";
 
 const selectClass =
   "rounded-xl border border-ink/15 bg-paper px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40";
@@ -40,6 +49,7 @@ export function DraftLibrary({
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const liveById = useMemo(() => new Map(pillars.map((item) => [item.id, item])), [pillars]);
   const filtered = useMemo(
@@ -69,6 +79,42 @@ export function DraftLibrary({
       setMessage("Could not duplicate that draft.");
     } finally {
       setPending(null);
+    }
+  }
+
+  function toggleSelected(id: string, checked: boolean) {
+    setSelectedIds((current) => {
+      if (checked) return current.includes(id) ? current : [...current, id];
+      return current.filter((item) => item !== id);
+    });
+  }
+
+  function onExportSelected(kind: "csv" | "txt" | "md") {
+    const rows = selectedOwnedDrafts(drafts, selectedIds, sessionUserId);
+    if (rows.length === 0) {
+      setMessage("Select at least one of your drafts to export. Unselected drafts are not included.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Export ${rows.length} selected draft${rows.length === 1 ? "" : "s"} as ${kind.toUpperCase()}? Includes title, topic, platform, format, status, pillar, last updated, and body. User ids and secrets are not included. Saved drafts are not changed.`,
+    );
+    if (!confirmed) return;
+    try {
+      const contents =
+        kind === "csv"
+          ? draftsToCsv(rows)
+          : rows
+              .map((row) =>
+                kind === "md"
+                  ? draftToMarkdown(draftToExportRecord(row))
+                  : draftToPlainText(draftToExportRecord(row)),
+              )
+              .join("\n\n---\n\n");
+      const mime = kind === "csv" ? "text/csv" : kind === "md" ? "text/markdown" : "text/plain";
+      downloadTextFile(exportFilename(kind, "studio-drafts"), contents, mime);
+      setMessage(`Exported ${rows.length} draft${rows.length === 1 ? "" : "s"}. Library records were not changed.`);
+    } catch {
+      setMessage("Could not export the selected drafts.");
     }
   }
 
@@ -221,6 +267,15 @@ export function DraftLibrary({
           <p className="text-sm text-ink/60">
             {filtered.length} of {drafts.length} drafts
           </p>
+          <Button type="button" variant="ghost" onClick={() => onExportSelected("csv")} disabled={busy}>
+            Export selected CSV
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => onExportSelected("txt")} disabled={busy}>
+            Export selected text
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => onExportSelected("md")} disabled={busy}>
+            Export selected Markdown
+          </Button>
         </div>
       </Card>
 
@@ -249,6 +304,17 @@ export function DraftLibrary({
             return (
               <li key={draft.id}>
                 <article className="rounded-2xl border border-ink/10 bg-paper-raised p-5">
+                  <div className="mb-3">
+                    <label className="inline-flex items-center gap-2 text-sm text-ink/70">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(draft.id)}
+                        onChange={(event) => toggleSelected(draft.id, event.target.checked)}
+                        aria-label={`Select ${title} for export`}
+                      />
+                      Select for export
+                    </label>
+                  </div>
                   <Link
                     href={`/studio/drafts/${draft.id}`}
                     className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"

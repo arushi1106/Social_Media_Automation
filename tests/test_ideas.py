@@ -82,6 +82,16 @@ def test_discovery_messages_include_brand_and_forbid_fake_trends():
     assert "search volume" in messages[0]["content"].lower()
 
 
+def test_discovery_messages_keep_brief_text_separate_from_brand():
+    messages = build_discovery_messages(
+        count=3,
+        extra_instructions="Campaign: Eval launch. Do not invent metrics.",
+        brand=BrandContext(name="Northstar"),
+    )
+    assert "User-authored content brief" in messages[1]["content"]
+    assert "Eval launch" in messages[1]["content"]
+
+
 def test_generate_content_ideas_uses_injected_openai():
     payload = {"ideas": [_idea("One"), _idea("Two"), _idea("Three")]}
     fake_choice = SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))

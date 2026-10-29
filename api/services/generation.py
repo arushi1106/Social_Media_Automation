@@ -893,6 +893,7 @@ MIN_IDEAS = 3
 MAX_IDEAS = 8
 DEFAULT_IDEAS = 5
 MAX_THEME = 400
+MAX_DISCOVERY_EXTRA = 2000
 
 DISCOVERY_OBJECTIVES: dict[str, str] = {
     "education": "Help the audience learn a specific, practical point.",
@@ -995,6 +996,7 @@ def build_discovery_messages(
     platform: str = "",
     objective: str = "",
     brand: Optional[BrandContext] = None,
+    extra_instructions: str = "",
 ) -> list[dict[str, str]]:
     count = assert_discovery_count(count)
     objective_key = assert_discovery_objective(objective)
@@ -1025,6 +1027,9 @@ def build_discovery_messages(
     theme_text = _clip(theme, MAX_THEME)
     if theme_text:
         user_parts.append(f"Optional theme or campaign: {theme_text}")
+    extra = _clip(extra_instructions, MAX_DISCOVERY_EXTRA)
+    if extra:
+        user_parts.append(f"User-authored content brief (not stored brand profile): {extra}")
     if objective_key:
         user_parts.append(f"Content objective: {objective_key}. {DISCOVERY_OBJECTIVES[objective_key]}")
     user_parts.append("Write in the brand's language when one is provided.")
@@ -1043,6 +1048,7 @@ def generate_content_ideas(
     platform: str = "",
     objective: str = "",
     brand: Optional[BrandContext] = None,
+    extra_instructions: str = "",
     openai_create: Optional[OpenAICreate] = None,
 ) -> list[dict[str, Any]]:
     count = assert_discovery_count(count)
@@ -1053,6 +1059,7 @@ def generate_content_ideas(
         platform=platform,
         objective=objective,
         brand=brand,
+        extra_instructions=extra_instructions,
     )
     parsed = request_json_completion(
         api_key=api_key,

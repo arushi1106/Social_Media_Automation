@@ -33,6 +33,7 @@ function record(overrides: Partial<IdeaRecord> = {}): IdeaRecord {
     user_id: "session-user",
     brand_id: "brand-1",
     status: "saved",
+    projectId: "",
     created_at: "2024-01-01",
     updated_at: "2024-01-01",
     ...overrides,

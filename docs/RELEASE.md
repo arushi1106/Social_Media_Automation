@@ -29,18 +29,20 @@ Apply these SQL files in order in the Supabase SQL editor (the app does not appl
 4. `supabase/migrations/20241028000003_content_ideas.sql`
 5. `supabase/migrations/20241028000004_content_plan_items.sql`
 6. `supabase/migrations/20241028000005_content_pillars.sql`
+7. `supabase/migrations/20241029000000_content_templates.sql` (optional until custom templates are used)
+8. `supabase/migrations/20241029000001_content_projects.sql` (optional until projects are used)
 
-- [ ] All six migrations applied on the target project.
+- [ ] Required migrations applied on the target project.
 - [ ] Auth → Email provider enabled.
 - [ ] Redirect URL includes `{origin}/auth/callback`.
-- [ ] RLS: a second test user cannot read another user’s `brands`, `content_items`, `content_ideas`, `content_plan_items`, or `content_pillars`.
+- [ ] RLS: a second test user cannot read another user’s `brands`, `content_items`, `content_ideas`, `content_plan_items`, `content_pillars`, `content_templates`, or `content_projects`.
 
 ## Processes
 
 - [ ] `GET http://127.0.0.1:8000/health` (or deployed API health) returns `ok` and `publishes_to_social: false` without secrets in the body.
 - [ ] `make dev-api` and `make dev-web` (or production equivalents) start without missing-module errors.
 - [ ] Next.js build succeeds (`cd web && npm run build`).
-- [ ] Do **not** run `python app.py` for the studio (legacy Flask still publishes).
+- [ ] Do **not** run `python app.py` for the studio. Without `ALLOW_LEGACY_PUBLISH=1` it exits; with that flag it still publishes.
 
 ## Automated checks (local)
 
@@ -80,6 +82,10 @@ Record the date and outcome when you run them. Do not tick from memory.
 - [ ] Strategy page counts drafts/pillars only (no engagement claims).
 - [ ] Unsaved editor changes: leave warning; back to drafts; continue last draft.
 - [ ] Keyboard: skip link, focus rings on primary controls, studio nav current page.
+- [ ] Templates: browse system catalog, save a custom template, apply to a new draft without overwriting an existing one.
+- [ ] Projects: create a brief, generate ideas without auto-save, attach a draft, delete with confirmation. Planning dates are not publish times.
+- [ ] Work board: counts match owned ideas/drafts; mark ready from the editor; empty states do not claim publishing.
+- [ ] Export one draft (text/Markdown/print) and a confirmed bulk CSV of selected drafts only. Unicode and commas survive. Saved rows unchanged.
 
 ## Known limitations (do not treat as completed work)
 
@@ -88,8 +94,19 @@ Record the date and outcome when you run them. Do not tick from memory.
 - Draft library search/filter is client-side over the owned list (bounded page size 40).
 - No archive status (`content_items.status` is `draft` or `ready` only).
 - Preferred platform lives in `brands.voice_preferences` JSON; optional.
-- Legacy Flask publishing modules remain in the repo and must stay unused by the studio.
+- Legacy Flask publishing modules remain in the repo. `python app.py` is gated by `ALLOW_LEGACY_PUBLISH=1`; `linkedin.py` / `insta.py` / `gpt.py` are unchanged and must stay unused by the studio.
+- Export is generated client-side from the owned draft list already loaded in the session (max 100 rows). It is not a server-side dump and does not replace backups.
 - This checklist does not certify production hosting, backups, or uptime.
+
+## Implemented vs live (Phases 9–12)
+
+| Area | Automated | Live / target project |
+| --- | --- | --- |
+| Templates, projects, work board, export unit tests | Local pytest / vitest | Browse UI with a real account |
+| FastAPI JWT + owned brand/pillar lookup | Mocked in pytest | Two-user RLS still **outstanding** |
+| OpenAI generation | Mocked | Requires `OPENAI_API_KEY` |
+| Migrations `20241029000000` and `20241029000001` | Files in repo | Must be applied manually on the target Supabase project |
+| Production deploy | Not performed | Not performed |
 
 ## Rollback
 

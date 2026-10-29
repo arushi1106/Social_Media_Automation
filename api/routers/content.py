@@ -16,6 +16,7 @@ from api.services.generation import (
     MAX_IDEAS,
     MIN_IDEAS,
     MAX_THEME,
+    MAX_DISCOVERY_EXTRA,
     GeneratedContent,
     generate_content_ideas,
     generate_hooks,
@@ -138,6 +139,7 @@ class IdeasRequest(BaseModel):
     theme: str = Field(default="", max_length=MAX_THEME)
     platform: str = Field(default="")
     objective: str = Field(default="")
+    extra_instructions: str = Field(default="", max_length=MAX_DISCOVERY_EXTRA)
     brand: Optional[BrandContext] = None
 
 
@@ -467,6 +469,7 @@ def ideas(
             theme=payload.theme,
             platform=payload.platform,
             objective=payload.objective,
+            extra_instructions=payload.extra_instructions,
             brand=brand,
         )
     )

@@ -172,6 +172,7 @@ export async function discoverStudioIdeas(form: DiscoveryForm): Promise<Discover
     theme: form.theme.trim(),
     platform: form.platform,
     objective: form.objective,
+    extra_instructions: form.extraInstructions?.trim() ?? "",
   });
   if (!result.ok) return result;
   const payload = result.payload as { ideas?: unknown[]; disclaimer?: string };
@@ -500,7 +501,35 @@ export async function updateStudioDraft(
   revalidatePath("/studio/drafts");
   revalidatePath(`/studio/drafts/${draftId}`);
   revalidatePath("/studio/strategy");
+  revalidatePath("/studio/work");
   return { ok: true, id: draftId };
+}
+
+export async function markStudioDraftStatus(
+  draftId: string,
+  status: "draft" | "ready",
+): Promise<DraftResult> {
+  const ctx = await sessionContext();
+  if (!ctx.ok) {
+    return { ok: false, message: ctx.error };
+  }
+  const existing = await loadOwnedDraft(draftId);
+  if (!existing) {
+    return { ok: false, message: "Draft not found." };
+  }
+  const { error } = await ctx.supabase
+    .from("content_items")
+    .update({ status })
+    .eq("id", existing.id)
+    .eq("user_id", ctx.user.id);
+  if (error) {
+    return { ok: false, message: saveErrorMessage(error) };
+  }
+  revalidatePath("/studio/drafts");
+  revalidatePath(`/studio/drafts/${draftId}`);
+  revalidatePath("/studio/work");
+  revalidatePath("/studio/strategy");
+  return { ok: true, id: existing.id };
 }
 
 export async function loadOwnedDraft(draftId: string): Promise<DraftRow | null> {

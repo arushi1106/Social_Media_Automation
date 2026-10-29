@@ -122,6 +122,15 @@ async function StudioSession() {
             <ButtonLink href="/studio/strategy" variant="ghost">
               Content strategy
             </ButtonLink>
+            <ButtonLink href="/studio/projects" variant="ghost">
+              Projects
+            </ButtonLink>
+            <ButtonLink href="/studio/work" variant="ghost">
+              Work
+            </ButtonLink>
+            <ButtonLink href="/studio/templates" variant="ghost">
+              Templates
+            </ButtonLink>
             <ButtonLink href="/studio/create" variant="ghost">
               New draft
             </ButtonLink>

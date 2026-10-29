@@ -32,7 +32,7 @@ make dev-api
 
 The API listens on `http://127.0.0.1:8000`. Check `GET /health`.
 
-Do **not** run `python app.py` for the studio. That legacy Flask route still generates posts and then calls Instagram publishing in a loop.
+Do **not** run `python app.py` for the studio. That legacy Flask route still generates posts and then calls Instagram publishing in a loop. The process now exits (and the `/` route returns 403) unless `ALLOW_LEGACY_PUBLISH=1` is set. Content Studio never sets that variable.
 
 ## 2. Database
 
@@ -44,9 +44,11 @@ In the Supabase SQL editor (or `supabase db push` if the CLI is linked):
 4. Run `supabase/migrations/20241028000003_content_ideas.sql` (creates `content_ideas` with owner-only RLS for the idea bank)
 5. Run `supabase/migrations/20241028000004_content_plan_items.sql` (weekly planner slots; owner-only RLS)
 6. Run `supabase/migrations/20241028000005_content_pillars.sql` (named brand content pillars; owner-only RLS)
-7. Confirm Auth → Providers → Email is enabled for local testing
+7. Run `supabase/migrations/20241029000000_content_templates.sql` (user-owned writing templates; owner-only RLS). Built-in catalog templates work without this file.
+8. Run `supabase/migrations/20241029000001_content_projects.sql` (content project briefs; owner-only RLS). Planning dates are not publish times.
+9. Confirm Auth → Providers → Email is enabled for local testing
 
-The migrations create `profiles`, `brands`, `content_sources`, `content_items`, `content_ideas`, `content_plan_items`, and `content_pillars` with ownership indexes and row-level security. They do not migrate MongoDB or `instance/demo.db`. This repository does not apply migrations to your Supabase project automatically.
+The migrations create `profiles`, `brands`, `content_sources`, `content_items`, `content_ideas`, `content_plan_items`, `content_pillars`, `content_templates`, and `content_projects` with ownership indexes and row-level security. They do not migrate MongoDB or `instance/demo.db`. This repository does not apply migrations to your Supabase project automatically.
 
 ### Brand onboarding
 
@@ -122,6 +124,18 @@ Automated tests mock PostgREST. They do not prove live RLS. After setting `SUPAB
 
 Do not put `SUPABASE_SERVICE_ROLE_KEY` in `NEXT_PUBLIC_*` variables.
 
+### Content templates (Phase 9)
+
+Open `/studio/templates`. Built-in structures ship in the Next.js app. Saving custom templates needs `20241029000000_content_templates.sql`. Applying a template opens `/studio/create` with writing instructions in additional instructions. Brand and pillar ids are still loaded and verified as in Phase 8.9; template text is user-authored extra instructions, not trusted profile context. Applying a template never overwrites a saved draft. No new environment variables.
+
+### Content projects (Phase 10)
+
+Open `/studio/projects`. Briefs group ideas and drafts around an objective. Idea suggestions are not saved until you choose them. Drafts store only a `metadata.inputs.projectId` reference. Planning dates are labelled as planning, not publishing. Needs `20241029000001_content_projects.sql`. Idea generation still verifies brand context as in Phase 8.9; brief text is extra instructions.
+
+### Work board (Phase 11)
+
+Open `/studio/work`. Idea / drafting / ready-for-use map onto existing `content_ideas.status` and `content_items.status` (`draft` | `ready`). No new status column. Counts are saved-record totals, not analytics. Marking ready does not publish.
+
 ## 3. Next.js UI
 
 ```bash
@@ -166,5 +180,7 @@ make typecheck
 | Email auth in Supabase | Creating accounts |
 
 Source extraction (`POST /v1/sources/extract`) does not need OpenAI. It will fail on sites that block unauthenticated scraping; that is expected.
+
+Exports (plain text, Markdown, CSV, print) run in the browser from drafts the signed-in user already loaded under RLS. They do not write back to the database.
 
 Manual launch steps and an unchecked verification list live in [RELEASE.md](RELEASE.md). Do not treat this app as production-ready until those items are actually performed.

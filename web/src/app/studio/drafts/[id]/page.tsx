@@ -61,7 +61,7 @@ async function DraftDetail({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <StudioShell title={row.title || row.topic || "Draft"} email={user.email}>
-      <DraftEditor draftId={row.id} initial={content} inputs={inputs} />
+      <DraftEditor draftId={row.id} initial={content} inputs={inputs} savedStatus={row.status} />
     </StudioShell>
   );
 }

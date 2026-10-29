@@ -41,6 +41,7 @@ export type DiscoveryForm = {
   platform: Platform | "";
   objective: DiscoveryObjective | "";
   count: number;
+  extraInstructions?: string;
 };
 
 export type DiscoveryFieldErrors = Partial<Record<keyof DiscoveryForm | "form", string>>;
@@ -64,6 +65,7 @@ export type IdeaRecord = GeneratedIdea & {
   user_id: string;
   brand_id: string | null;
   status: IdeaStatus;
+  projectId: string;
   created_at: string;
   updated_at: string;
 };
@@ -82,6 +84,7 @@ export type IdeaWritePayload = {
     hook: string;
     call_to_action: string;
     pillar: string;
+    project_id?: string;
   };
 };
 
@@ -176,6 +179,7 @@ export function ideaFromRow(row: IdeaRow): IdeaRecord | null {
     pillar: typeof meta.pillar === "string" ? meta.pillar : "",
     platform,
     status: isIdeaStatus(row.status) ? row.status : "saved",
+    projectId: typeof meta.project_id === "string" ? meta.project_id : "",
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -186,6 +190,7 @@ export function toIdeaWritePayload(
   sessionUserId: string,
   brandId: string | null,
   status: IdeaStatus = "saved",
+  projectId = "",
 ): IdeaWritePayload {
   if (!sessionUserId) {
     throw new Error("Authenticated user id is required.");
@@ -204,6 +209,7 @@ export function toIdeaWritePayload(
       hook: idea.hook,
       call_to_action: idea.call_to_action,
       pillar: idea.pillar,
+      ...(projectId.trim() ? { project_id: projectId.trim() } : {}),
     },
   };
 }
@@ -234,6 +240,7 @@ export function ideaToCreateForm(idea: GeneratedIdea, allowedPlatforms: Platform
     pillarId: "",
     pillarName: "",
     pillarDescription: "",
+    projectId: "",
   };
 }
 

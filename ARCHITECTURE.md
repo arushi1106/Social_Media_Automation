@@ -40,7 +40,7 @@ Secrets (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, DB URLs) stay on the ser
 
 ### Layout
 
-- `app.py`, `gpt.py`, `scraping.py`, `linkedin.py`, `insta.py` — legacy automation (preserved)
+- `app.py`, `gpt.py`, `scraping.py`, `linkedin.py`, `insta.py` — legacy automation (preserved; `app.py` exits unless `ALLOW_LEGACY_PUBLISH=1`)
 - `api/` — FastAPI boundary used by the studio
 - `web/` — Next.js App Router UI
 - `supabase/migrations/` — Postgres schema, indexes, RLS
@@ -55,6 +55,8 @@ Secrets (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, DB URLs) stay on the ser
 - `content_ideas` — saved topic suggestions (owner-only RLS); not posts
 - `content_plan_items` — weekly writing slots linking an idea to a weekday; not a publish calendar
 - `content_pillars` — named brand themes (name + description), owner-only; distinct from `brands.topics`
+- `content_templates` — user-owned writing structures; system catalog is code, not rows
+- `content_projects` — briefs grouping ideas/drafts; not a scheduler
 
 ## Migration steps (phased)
 
@@ -74,7 +76,11 @@ Secrets (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, DB URLs) stay on the ser
 14. **Phase 8.7** — Reliability: CORS method allowlist, sanitized model errors, documented FastAPI vs Next.js trust boundary, throttle 8/min/user. Still no auto-publish.
 15. **Phase 8.8** — UX consistency (current nav, skip link), [docs/RELEASE.md](docs/RELEASE.md) launch checklist. Release candidate after automated checks; not production-ready until manual and ops rows are done. Still no auto-publish.
 16. **Phase 8.9** — FastAPI loads owned `brands` / `content_pillars` via the user JWT and anon key (RLS). Client brand/pillar text is not trusted. No new table. Still no auto-publish.
-17. **Later** — Planner/idea-bank pillar planning. Still no auto-publish.
+17. **Phase 9** — Reusable templates: built-in catalog in app code plus user-owned `content_templates` (RLS). Apply on a new draft as extra instructions. Still no auto-publish.
+18. **Phase 10** — Content projects/briefs (`content_projects`). Ideas and drafts associated by metadata references. Planning dates are not a publish calendar. Still no auto-publish.
+19. **Phase 11** — Work board at `/studio/work` using existing idea and draft statuses. No new status column. Still no auto-publish.
+20. **Phase 12** — Client-side export of owned drafts (text, Markdown, CSV, print). Legacy Flask publisher requires `ALLOW_LEGACY_PUBLISH=1`. Still no auto-publish.
+21. **Later** — Planner/idea-bank pillar planning. Still no auto-publish.
 
 ## Explicit non-goals
 

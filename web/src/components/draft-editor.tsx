@@ -10,6 +10,7 @@ import {
   repurposeStudioDraft,
   reviewStudioDraft,
   saveStudioDraft,
+  markStudioDraftStatus,
   updateStudioDraft,
 } from "@/app/studio/actions";
 import { QualityReviewSection } from "@/components/quality-review";
@@ -43,21 +44,43 @@ import {
   type VariationAngle,
 } from "@/lib/variations";
 import { rememberLastDraftId } from "@/lib/studio-session";
+import { createStudioTemplate } from "@/app/studio/templates/actions";
+import { draftFromWork } from "@/lib/templates";
+import {
+  downloadTextFile,
+  draftToMarkdown,
+  draftToPlainText,
+  exportFilename,
+  printDraftDocument,
+  type ExportDraft,
+} from "@/lib/export";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { DraftPreview } from "@/components/draft-preview";
 
-type Pending = "save" | "refine" | "variations" | "hooks" | "repurpose" | "save-new" | "review" | null;
+type Pending =
+  | "save"
+  | "refine"
+  | "variations"
+  | "hooks"
+  | "repurpose"
+  | "save-new"
+  | "review"
+  | "template"
+  | "status"
+  | null;
 
 export function DraftEditor({
   draftId,
   initial,
   inputs,
+  savedStatus = "draft",
 }: {
   draftId: string;
   initial: GeneratedContent;
   inputs: CreateFormState;
+  savedStatus?: string;
 }) {
   const router = useRouter();
   const [saved, setSaved] = useState(initial);
@@ -77,6 +100,9 @@ export function DraftEditor({
   const [copied, setCopied] = useState(false);
   const [review, setReview] = useState<QualityReview | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [itemStatus, setItemStatus] = useState(savedStatus);
 
   const busy = pending !== null;
   const savedEqualsWorking = contentEquals(saved, working);
@@ -137,9 +163,66 @@ export function DraftEditor({
     }
   }
 
+  async function onMarkReady() {
+    setPending("status");
+    setMessage(null);
+    try {
+      const next = itemStatus === "ready" ? "draft" : "ready";
+      const result = await markStudioDraftStatus(draftId, next);
+      if (!result.ok) {
+        if (handleExpired(result.message)) return;
+        setMessage(result.message);
+        return;
+      }
+      setItemStatus(next);
+      setMessage(
+        next === "ready"
+          ? "Marked ready for use. This does not post anywhere."
+          : "Returned to drafting. The saved text is unchanged.",
+      );
+      router.refresh();
+    } catch {
+      setMessage("Could not update draft status.");
+    } finally {
+      setPending(null);
+    }
+  }
+
   async function onCopy() {
     await navigator.clipboard.writeText(flattenGeneratedText(working));
     setCopied(true);
+  }
+
+  function editorExportRecord(): ExportDraft {
+    return {
+      title: (working.title || inputs.topic || "Untitled").trim(),
+      topic: inputs.topic,
+      platform: working.platform,
+      format: working.format,
+      status: itemStatus === "ready" ? "Ready" : "Draft",
+      pillar: inputs.pillarName || "Unassigned",
+      updated_at: "",
+      body: flattenGeneratedText(working),
+    };
+  }
+
+  function onExport(kind: "txt" | "md") {
+    try {
+      const record = editorExportRecord();
+      const contents = kind === "md" ? draftToMarkdown(record) : draftToPlainText(record);
+      downloadTextFile(exportFilename(kind, record.title), contents, kind === "md" ? "text/markdown" : "text/plain");
+      setMessage("Downloaded a copy. The saved draft was not changed.");
+    } catch {
+      setMessage("Could not export this draft.");
+    }
+  }
+
+  function onPrint() {
+    try {
+      printDraftDocument(editorExportRecord());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not open the print view.");
+    }
   }
 
   async function runReview() {
@@ -313,6 +396,32 @@ export function DraftEditor({
     setMessage("Hook applied to the opening only. Save to persist it. Quality review was for the previous saved text.");
   }
 
+  async function saveAsTemplate() {
+    const name = templateName.trim();
+    const description = templateDescription.trim() || "Saved from an existing draft structure.";
+    if (!name) {
+      setMessage("Enter a template name.");
+      return;
+    }
+    setPending("template");
+    setMessage(null);
+    try {
+      const result = await createStudioTemplate(draftFromWork(name, description, inputs, working));
+      if (!result.ok) {
+        if (handleExpired(result.message)) return;
+        setMessage(result.message);
+        return;
+      }
+      setTemplateName("");
+      setTemplateDescription("");
+      setMessage("Template saved. This draft is unchanged. Use it from Templates on a new draft.");
+    } catch {
+      setMessage("Could not save that template.");
+    } finally {
+      setPending(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <p className="rounded-xl border border-ink/10 bg-paper-raised px-4 py-3 text-sm text-ink/70" role="status">
@@ -322,7 +431,39 @@ export function DraftEditor({
         <ButtonLink href="/studio/drafts" variant="ghost">
           Back to drafts
         </ButtonLink>
+        <ButtonLink href="/studio/templates" variant="ghost">
+          Templates
+        </ButtonLink>
       </div>
+      <Card>
+        <h2 className="font-serif text-xl">Save as template</h2>
+        <p className="mt-2 text-sm leading-6 text-ink/70">
+          Stores the writing structure, not a copy of this post. Applying it later opens a new draft.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="template-name">Template name</Label>
+            <Input
+              id="template-name"
+              value={templateName}
+              onChange={(event) => setTemplateName(event.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="template-description">When to use it</Label>
+            <Input
+              id="template-description"
+              value={templateDescription}
+              onChange={(event) => setTemplateDescription(event.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-4">
+          <Button type="button" variant="ghost" onClick={saveAsTemplate} disabled={pending === "template"}>
+            {pending === "template" ? "Saving template…" : "Save structure as template"}
+          </Button>
+        </div>
+      </Card>
       {inputs.pillarId ? (
         <p className="text-sm leading-6 text-ink/70">
           {inputs.pillarName
@@ -415,6 +556,13 @@ export function DraftEditor({
             <Button type="button" onClick={onSave} disabled={busy}>
               {pending === "save" ? "Saving…" : "Save this draft"}
             </Button>
+            <Button type="button" variant="ghost" onClick={onMarkReady} disabled={busy}>
+              {pending === "status"
+                ? "Updating…"
+                : itemStatus === "ready"
+                  ? "Return to drafting"
+                  : "Mark ready for use"}
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -431,6 +579,15 @@ export function DraftEditor({
             </Button>
             <Button type="button" variant="ghost" onClick={onCopy} disabled={busy}>
               {copied ? "Copied" : "Copy"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => onExport("txt")} disabled={busy}>
+              Export text
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => onExport("md")} disabled={busy}>
+              Export Markdown
+            </Button>
+            <Button type="button" variant="ghost" onClick={onPrint} disabled={busy}>
+              Print
             </Button>
           </div>
         </Card>

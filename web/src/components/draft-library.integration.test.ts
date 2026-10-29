@@ -22,6 +22,9 @@ describe("draft library organisation", () => {
     expect(library).toContain("duplicateStudioDraft");
     expect(library).toContain("deleteStudioDraft");
     expect(library).toContain("Open editor");
+    expect(library).toContain("Export selected CSV");
+    expect(library).toContain("window.confirm");
+    expect(library).toContain("selectedOwnedDrafts");
     expect(actions).toContain("eq(\"user_id\", ctx.user.id)");
     expect(actions).toContain("duplicateDraftTitle");
     expect(actions).not.toContain("SUPABASE_SERVICE_ROLE");

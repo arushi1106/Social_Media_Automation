@@ -36,16 +36,17 @@ async function session() {
   return { ok: true as const, supabase, user, brand };
 }
 
-export async function saveStudioIdea(idea: GeneratedIdea): Promise<IdeaResult> {
+export async function saveStudioIdea(idea: GeneratedIdea, projectId = ""): Promise<IdeaResult> {
   const ctx = await session();
   if (!ctx.ok) return { ok: false, message: ctx.error };
-  const payload = toIdeaWritePayload(idea, ctx.user.id, ctx.brand?.id ?? null, "saved");
+  const payload = toIdeaWritePayload(idea, ctx.user.id, ctx.brand?.id ?? null, "saved", projectId);
   const { data, error } = await ctx.supabase.from("content_ideas").insert(payload).select("id").single();
   if (error || !data) {
     return { ok: false, message: saveErrorMessage(error) };
   }
   revalidatePath("/studio/ideas");
   revalidatePath("/studio/planner");
+  revalidatePath("/studio/projects");
   return { ok: true, id: data.id };
 }
 

@@ -16,6 +16,13 @@ describe("strategy-aware generation wiring", () => {
     expect(page).toContain("params.pillar");
   });
 
+  it("can apply a template on create without treating it as a saved draft overwrite", () => {
+    expect(page).toContain("params.template");
+    expect(page).toContain("applyTemplateToForm");
+    expect(form).toContain("Structure from template");
+    expect(form).toContain("templateUnavailable");
+  });
+
   it("lets the user pick a pillar or continue with none", () => {
     expect(form).toContain("Content pillar (optional)");
     expect(form).toContain("No pillar — use topic and brand only");

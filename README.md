@@ -10,6 +10,8 @@ This repository started as a Flask automation script (`app.py`) that scraped Goo
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [docs/SETUP.md](docs/SETUP.md), and [docs/RELEASE.md](docs/RELEASE.md) for the launch checklist.
 
+Saved drafts can be copied or exported as text, Markdown, or CSV from the editor and library. Export does not publish or change stored records. `python app.py` is a disabled legacy publisher (requires `ALLOW_LEGACY_PUBLISH=1`) and is not part of the studio.
+
 ```bash
 make install-api
 make install-web

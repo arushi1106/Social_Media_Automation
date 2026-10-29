@@ -32,6 +32,7 @@ export function QualityReviewSection({
   disabled?: boolean;
 }) {
   return (
+    <div id="quality-review">
     <Card>
       <h2 className="font-serif text-2xl">{REVIEW_SECTION_TITLE}</h2>
       <p className="mt-1 text-sm leading-6 text-ink/65">
@@ -65,6 +66,7 @@ export function QualityReviewSection({
       ) : null}
       {review ? <QualityReviewResults review={review} onImprove={onImprove} disabled={disabled} /> : null}
     </Card>
+    </div>
   );
 }
 
